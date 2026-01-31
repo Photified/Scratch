@@ -60,6 +60,11 @@
         .input-lg { font-size: 20px; padding: 16px; text-align: center; border: 2px solid var(--border); }
         .input-lg:focus { border-color: var(--primary); outline: none; }
 
+        /* SLIDER STYLING */
+        input[type=range] { -webkit-appearance: none; width: 100%; background: transparent; }
+        input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; height: 24px; width: 24px; border-radius: 50%; background: var(--primary); margin-top: -10px; box-shadow: 0 2px 6px rgba(0,0,0,0.2); }
+        input[type=range]::-webkit-slider-runnable-track { width: 100%; height: 4px; background: var(--border); border-radius: 2px; }
+
         /* MODAL */
         .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.6); backdrop-filter: blur(4px); display: flex; align-items: center; justify-content: center; z-index: 100; }
         .modal-bottom { align-items: flex-end; }
@@ -96,7 +101,7 @@
         import { getFirestore, collection, addDoc, doc, updateDoc, getDocs, getDoc, setDoc, query, where, orderBy, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
         import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js";
         
-      // Your web app's Firebase configuration
+       // Your web app's Firebase configuration
 const firebaseConfig = {
   apiKey: "AIzaSyBPBps7eOq5gqyT5LuOnUGJkhPumBbZh-w",
   authDomain: "scratch-d0420.firebaseapp.com",
@@ -289,7 +294,6 @@ const firebaseConfig = {
             const [modalOpen, setModalOpen] = useState(false);
 
             useEffect(() => {
-                // FIXED QUERY: REMOVED orderBy TO FIX MISSING INDEX ISSUE
                 const q = window.ops.query(
                     window.ops.collection(window.db, "bets"), 
                     window.ops.where("participants", "array-contains", user.email)
@@ -297,7 +301,6 @@ const firebaseConfig = {
                 
                 return window.ops.onSnapshot(q, (snapshot) => {
                     const allBets = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                    // Client-Side Sort (Newest First)
                     allBets.sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
                     setBets(allBets);
                 });
@@ -360,6 +363,12 @@ const firebaseConfig = {
                                                 <div style={{fontSize:13, color:'var(--text-sub)'}}>
                                                     {iWon ? 'You won' : `${bet.winnerName || 'Opponent'} won`}
                                                 </div>
+                                                {/* SHOW COURSE & HOLE IF AVAILABLE */}
+                                                {(bet.course || bet.hole) && (
+                                                    <div style={{fontSize:11, color:'var(--primary)', marginTop:2, fontWeight:500}}>
+                                                        {bet.hole ? `Hole ${bet.hole}` : ''} {bet.hole && bet.course ? '•' : ''} {bet.course}
+                                                    </div>
+                                                )}
                                             </div>
                                             <div className={`bet-val ${iWon ? 'text-green' : 'text-red'}`}>
                                                 {iWon ? '+' : '-'}${bet.amount}
@@ -414,6 +423,10 @@ const firebaseConfig = {
             const [amount, setAmount] = useState(5);
             const [type, setType] = useState(null);
             const [customType, setCustomType] = useState("");
+            
+            // NEW STATE FOR HOLE & COURSE
+            const [hole, setHole] = useState(1);
+            const [course, setCourse] = useState(localStorage.getItem('lastCourse') || "");
 
             const presets = [
                 { id: "DART", label: "Closest to Pin", img: "./images/bet_cp.png" },
@@ -441,13 +454,19 @@ const firebaseConfig = {
                 const winnerName = winnerObj ? (winnerObj.email === user.email ? username : winnerObj.username) : 'Unknown';
                 const participantEmails = participants.map(p => p.email);
 
+                // Save Course to Local Storage for next time
+                if(course) localStorage.setItem('lastCourse', course);
+
                 onSubmit({
                     type: finalType,
                     img: finalImg,
                     amount: parseInt(amount),
                     winnerEmail: winnerEmail,
                     winnerName: winnerName,
-                    participants: participantEmails
+                    participants: participantEmails,
+                    // Pass Hole/Course Data
+                    hole: hole,
+                    course: course
                 });
             };
 
@@ -457,6 +476,32 @@ const firebaseConfig = {
                         <div style={{display:'flex', justifyContent:'space-between', marginBottom:20}}>
                             <h3 style={{fontFamily:'Times New Roman', fontSize:24}}>New Wager</h3>
                             <div onClick={onClose} style={{cursor:'pointer'}}><i data-lucide="x"></i></div>
+                        </div>
+
+                        {/* NEW: COURSE & HOLE SECTION */}
+                        <div style={{background:'var(--bg-body)', padding:16, borderRadius:12, marginBottom:24}}>
+                            <div className="section-label">LOCATION</div>
+                            <div style={{display:'flex', gap:10, alignItems:'center', marginBottom:10}}>
+                                <div style={{flex:1}}>
+                                    <input 
+                                        className="input-std" 
+                                        style={{width:'100%', fontSize:14}} 
+                                        placeholder="Course Name..." 
+                                        value={course}
+                                        onChange={(e) => setCourse(e.target.value)}
+                                    />
+                                </div>
+                                <div style={{width:60, textAlign:'center'}}>
+                                    <div style={{fontSize:10, color:'var(--text-sub)', fontWeight:700}}>HOLE</div>
+                                    <div style={{fontSize:24, fontWeight:700, color:'var(--primary)'}}>{hole}</div>
+                                </div>
+                            </div>
+                            <input 
+                                type="range" 
+                                min="1" max="18" 
+                                value={hole} 
+                                onChange={(e) => setHole(e.target.value)} 
+                            />
                         </div>
 
                         <div className="section-label">WHO IS IN THE BET?</div>
