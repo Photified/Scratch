@@ -34,15 +34,14 @@
         .brand h1 { font-family: var(--font-serif); font-size: 22px; font-weight: 700; letter-spacing: 0.5px; margin: 0; }
         
         /* TABS */
-        .nav-tabs { display: flex; border-bottom: 1px solid var(--border); background: var(--bg-card); }
-        .nav-item { flex: 1; text-align: center; padding: 16px; color: var(--text-sub); font-weight: 600; cursor: pointer; font-size: 14px; position: relative; }
+        .nav-tabs { display: flex; border-top: 1px solid var(--border); background: var(--bg-card); position: sticky; bottom: 0; padding-bottom: env(safe-area-inset-bottom); z-index: 40; }
+        .nav-item { flex: 1; text-align: center; padding: 16px 4px; color: var(--text-sub); font-weight: 600; cursor: pointer; font-size: 11px; display: flex; flex-direction: column; align-items: center; gap: 4px; }
         .nav-item.active { color: var(--primary); }
-        .nav-item.active::after { content: ''; position: absolute; bottom: 0; left: 0; right: 0; height: 3px; background: var(--primary); border-radius: 3px 3px 0 0; }
-
-        /* CONTENT */
-        .content { flex: 1; padding-bottom: 100px; overflow-y: auto; }
         
-        /* HERO GRID - Boxes */
+        /* CONTENT */
+        .content { flex: 1; padding-bottom: 20px; overflow-y: auto; }
+        
+        /* HERO GRID */
         .hero-grid { display: flex; gap: 16px; padding: 20px; border-bottom: 1px solid var(--border); background: var(--bg-body); }
         .hero-box { 
             flex: 1; height: 140px; 
@@ -75,7 +74,6 @@
         .settings-view { padding: 24px; }
         .settings-card { background: var(--bg-body); border-radius: 12px; border: 1px solid var(--border); padding: 16px; margin-bottom: 24px; }
         .settings-row { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid rgba(0,0,0,0.05); }
-        
         .roster-item { display: flex; align-items: center; padding: 12px 0; border-bottom: 1px solid rgba(0,0,0,0.05); cursor: pointer; }
         .roster-avatar { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; margin-right: 12px; border: 2px solid var(--border); }
         .delete-btn { color: #DC2626; font-size: 18px; cursor: pointer; padding: 8px; margin-left: auto; }
@@ -106,7 +104,6 @@
         .btn-full:disabled { opacity: 0.5; cursor: not-allowed; }
         .btn-primary { background: var(--primary); color: white; }
 
-        /* UTILS */
         .login-screen { height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; text-align: center; padding: 20px; padding-top: 80px; }
         .loading-tip { font-size: 12px; opacity: 0.6; margin-top: 20px; color: #DC2626; display: none; }
         .icon-btn { cursor: pointer; padding: 8px; border-radius: 50%; transition: background 0.1s; }
@@ -124,7 +121,7 @@
         import { getFirestore, collection, addDoc, doc, updateDoc, getDocs, getDoc, setDoc, query, where, orderBy, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
         import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js";
         
-     // Your web app's Firebase configuration
+   // Your web app's Firebase configuration
 const firebaseConfig = {
   apiKey: "AIzaSyBPBps7eOq5gqyT5LuOnUGJkhPumBbZh-w",
   authDomain: "scratch-d0420.firebaseapp.com",
@@ -256,7 +253,7 @@ const firebaseConfig = {
         );
 
         const FriendView = ({ friend, bets, user, getStats }) => {
-            if (!friend) return null;
+            if (!friend) return <div className="content">Loading...</div>;
             const friendBets = bets.filter(b => b.participants && b.participants.includes(friend.email));
             const friendBalance = getStats(friendBets);
             
@@ -403,6 +400,12 @@ const firebaseConfig = {
 
         // --- MAIN APP ---
 
+        let setGlobalAlert = null;
+        const showAppAlert = (title, msg) => {
+            if(setGlobalAlert) setGlobalAlert({ show: true, title, msg });
+            else alert(msg);
+        };
+
         function App() {
             const [user, setUser] = useState(null);
             const [username, setUsername] = useState(null);
@@ -424,6 +427,7 @@ const firebaseConfig = {
             }, []);
 
             useEffect(() => {
+                setGlobalAlert = setAlertState; 
                 if (!window.ops) return;
                 const unsubscribe = window.ops.onAuthStateChanged(window.auth, async (u) => {
                     if (u) {
@@ -444,8 +448,6 @@ const firebaseConfig = {
                 return () => { unsubscribe(); }
             }, []);
 
-            // Handlers
-            const showAppAlert = (title, msg) => setAlertState({ show: true, title, msg });
             const handleLogin = async () => { try { await window.ops.signInWithPopup(window.auth, window.provider); } catch (e) { showAppAlert("Login Error", e.message); } };
             const handleInstall = () => { if (deferredPrompt) { deferredPrompt.prompt(); deferredPrompt.userChoice.then((result) => { if (result.outcome === 'accepted') setDeferredPrompt(null); }); } else { showAppAlert("Install", "To install: Tap the Share/Menu button in your browser, then 'Add to Home Screen'."); } };
             
@@ -538,7 +540,6 @@ const firebaseConfig = {
 
         function MainApp({ user, username, roster, onAddFriend, onRemoveFriend, showAppAlert, darkMode, setDarkMode, handleInstall, isStandalone }) {
             const [view, setView] = useState('ledger'); 
-            const [lastTab, setLastTab] = useState('ledger'); 
             const [activeFriend, setActiveFriend] = useState(null); 
             const [bets, setBets] = useState([]);
             const [modalOpen, setModalOpen] = useState(false);
@@ -573,27 +574,31 @@ const firebaseConfig = {
                 } catch (e) { showAppAlert("Error", e.message); }
             };
 
-            const switchTab = (tab) => { setActiveFriend(null); setLastTab(tab); setView(tab); };
-            const openSettings = () => { setActiveFriend(null); setView('settings'); };
+            const switchTab = (tab) => { setActiveFriend(null); setView(tab); };
             const openFriend = (friend) => { setActiveFriend(friend); setView('friend'); };
-            const goBack = () => { if (view === 'settings') setView(lastTab); else if (view === 'friend') setView('clubhouse'); };
+            const goBack = () => { setActiveFriend(null); setView('clubhouse'); };
 
             return (
                 <div className="app-container">
                     <header className="header">
-                        {view === 'settings' ? (
-                            <><div className="icon-btn" onClick={goBack}><i data-lucide="arrow-left" color="white"></i></div><div className="brand">Settings</div><div style={{width:40}}></div></>
-                        ) : view === 'friend' ? (
+                        {view === 'friend' ? (
                             <><div className="icon-btn" onClick={goBack}><i data-lucide="arrow-left" color="white"></i></div><div className="brand">{activeFriend ? activeFriend.name : 'Friend'}</div><div style={{width:40}}></div></>
                         ) : (
-                            <><div className="brand">Scratch</div><div className="icon-btn" onClick={openSettings}><i data-lucide="settings" color="white"></i></div></>
+                            <div className="brand">Scratch</div>
                         )}
                     </header>
 
-                    {(view === 'ledger' || view === 'clubhouse') && (
+                    {(view !== 'friend') && (
                         <div className="nav-tabs">
-                            <div className={`nav-item ${view === 'ledger' ? 'active' : ''}`} onClick={() => switchTab('ledger')}>My Ledger</div>
-                            <div className={`nav-item ${view === 'clubhouse' ? 'active' : ''}`} onClick={() => switchTab('clubhouse')}>Clubhouse</div>
+                            <div className={`nav-item ${view === 'ledger' ? 'active' : ''}`} onClick={() => switchTab('ledger')}>
+                                <i data-lucide="layout-list" size="20"></i><span>My Ledger</span>
+                            </div>
+                            <div className={`nav-item ${view === 'clubhouse' ? 'active' : ''}`} onClick={() => switchTab('clubhouse')}>
+                                <i data-lucide="users" size="20"></i><span>Clubhouse</span>
+                            </div>
+                            <div className={`nav-item ${view === 'settings' ? 'active' : ''}`} onClick={() => switchTab('settings')}>
+                                <i data-lucide="settings" size="20"></i><span>Settings</span>
+                            </div>
                         </div>
                     )}
 
