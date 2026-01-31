@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
-    <title>Scratch - The Gentlemen's Wager</title>
+    <title>Scratch Debug Mode</title>
     
     <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
@@ -11,106 +11,12 @@
     <script src="https://unpkg.com/lucide@latest"></script>
 
     <style>
-        :root {
-            --primary: #00594C; /* Masters Green */
-            --accent: #E8D55A;  /* Yellow */
-            --bg-body: #F9FAFB;
-            --bg-card: #FFFFFF;
-            --text-main: #111827;
-            --text-sub: #6B7280;
-            --border: #E5E7EB;
-            --font-serif: "Times New Roman", Times, serif; 
-            --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-        }
-
-        /* DARK MODE OVERRIDES */
-        body.dark-mode {
-            --primary: #059669; /* Brighter green for dark mode */
-            --bg-body: #111827;
-            --bg-card: #1F2937;
-            --text-main: #F9FAFB;
-            --text-sub: #9CA3AF;
-            --border: #374151;
-        }
-
-        * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
-        body { background-color: var(--bg-body); color: var(--text-main); font-family: var(--font-sans); transition: background 0.3s, color 0.3s; }
-        
-        .app-container { max-width: 500px; margin: 0 auto; min-height: 100vh; background: var(--bg-card); box-shadow: 0 0 20px rgba(0,0,0,0.05); display: flex; flex-direction: column; }
-        
-        /* HEADER */
-        .header { background-color: var(--primary); padding: 16px 20px; color: white; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 10; }
-        .brand h1 { font-family: var(--font-serif); font-size: 22px; font-weight: 700; letter-spacing: 0.5px; }
-        .header-actions { display: flex; gap: 16px; align-items: center; }
-        .icon-btn { cursor: pointer; opacity: 0.9; }
-
-        /* TABS */
-        .nav-tabs { display: flex; border-bottom: 1px solid var(--border); background: var(--bg-card); }
-        .nav-item { flex: 1; text-align: center; padding: 16px; color: var(--text-sub); font-weight: 600; cursor: pointer; font-size: 14px; position: relative; }
-        .nav-item.active { color: var(--primary); }
-        .nav-item.active::after { content: ''; position: absolute; bottom: 0; left: 0; right: 0; height: 3px; background: var(--primary); border-radius: 3px 3px 0 0; }
-
-        /* HERO CARD */
-        .hero-card { padding: 32px 20px; text-align: center; background: var(--bg-card); border-bottom: 1px solid var(--border); }
-        .hero-label { font-size: 12px; text-transform: uppercase; color: var(--text-sub); letter-spacing: 1px; font-weight: 700; margin-bottom: 8px; }
-        .hero-amount { font-family: var(--font-serif); font-size: 56px; font-weight: 700; line-height: 1; }
-        .text-green { color: #059669; }
-        .text-red { color: #DC2626; }
-
-        /* FEED & LISTS */
-        .content { flex: 1; padding-bottom: 80px; }
-        .section-title { padding: 24px 20px 10px; font-family: var(--font-serif); font-size: 18px; font-weight: 700; color: var(--text-main); display: flex; align-items: center; gap: 8px; }
-        .feed-list { padding: 0 16px; }
-        .bet-row { display: flex; align-items: center; padding: 16px 0; border-bottom: 1px solid var(--border); }
-        .bet-icon { width: 42px; height: 42px; background: var(--bg-body); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-right: 16px; color: var(--primary); border: 1px solid var(--border); }
-        .bet-info { flex: 1; }
-        .bet-type { font-weight: 600; font-size: 16px; margin-bottom: 4px; color: var(--text-main); }
-        .bet-meta { font-size: 13px; color: var(--text-sub); }
-        .bet-val { font-family: var(--font-serif); font-size: 18px; font-weight: 700; }
-
-        /* SETTINGS & PROFILE */
-        .settings-view { padding: 24px; }
-        .settings-card { background: var(--bg-body); border-radius: 12px; border: 1px solid var(--border); overflow: hidden; margin-bottom: 24px; }
-        .settings-row { padding: 16px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); }
-        .settings-row:last-child { border-bottom: none; }
-        .settings-label { font-weight: 600; color: var(--text-main); }
-        
-        .profile-lg { width: 80px; height: 80px; border-radius: 50%; border: 3px solid var(--primary); margin-bottom: 16px; }
-        .profile-header { text-align: center; margin-bottom: 32px; }
-
-        /* BUTTONS */
-        .fab { position: fixed; bottom: 30px; right: 24px; width: 64px; height: 64px; border-radius: 50%; background: var(--primary); color: white; border: none; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.3); display: flex; align-items: center; justify-content: center; cursor: pointer; transition: transform 0.1s; z-index: 50; }
-        .fab:active { transform: scale(0.95); }
-        
-        .btn-full { width: 100%; padding: 14px; border-radius: 12px; font-weight: 600; font-size: 16px; cursor: pointer; text-align: center; border: none; margin-bottom: 12px; }
-        .btn-primary { background: var(--primary); color: white; }
-        .btn-outline { background: transparent; border: 1px solid var(--border); color: var(--text-sub); }
-
-        /* LOGIN & ERROR */
-        .login-screen { height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; background-color: var(--primary); color: white; padding: 32px; text-align: center; }
-        .error-box { margin-top: 20px; padding: 12px; background: rgba(0,0,0,0.2); border-radius: 8px; font-size: 12px; max-width: 300px; }
-
-        /* MODAL */
-        .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); backdrop-filter: blur(4px); display: flex; align-items: flex-end; z-index: 100; }
-        .modal-content { background: var(--bg-card); width: 100%; border-radius: 24px 24px 0 0; padding: 24px; max-height: 90vh; overflow-y: auto; box-shadow: 0 -10px 40px rgba(0,0,0,0.1); }
-        .control-label { display: block; font-size: 11px; font-weight: 800; color: var(--text-sub); margin-bottom: 12px; letter-spacing: 1px; text-transform: uppercase; }
-        
-        /* CHIPS & TOGGLES */
-        .chip { padding: 14px 0; border: 1px solid var(--border); background: var(--bg-card); border-radius: 12px; text-align: center; font-weight: 700; color: var(--text-main); cursor: pointer; min-width: 60px; font-family: var(--font-serif); font-size: 18px; }
-        .chip.active { background: var(--primary); color: white; border-color: var(--primary); }
-        .chip-grid { display: flex; gap: 10px; margin-bottom: 24px; overflow-x: auto; padding-bottom: 4px; }
-        
-        .type-card { border: 1px solid var(--border); padding: 16px; border-radius: 12px; text-align: center; cursor: pointer; background: var(--bg-card); }
-        .type-card.active { border-color: var(--primary); background: rgba(0, 89, 76, 0.05); box-shadow: 0 0 0 2px var(--primary); }
-        .type-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 32px; }
-        .type-card strong { display: block; color: var(--text-main); margin-bottom: 4px; }
-        .type-card small { color: var(--text-sub); font-size: 11px; }
-
-        .winner-toggle { display: flex; background: var(--bg-body); padding: 4px; border-radius: 12px; margin-bottom: 24px; border: 1px solid var(--border); }
-        .toggle-opt { flex: 1; padding: 12px; text-align: center; font-weight: 600; font-size: 14px; border-radius: 8px; cursor: pointer; color: var(--text-sub); }
-        .toggle-opt.selected-green { background: var(--bg-card); color: var(--primary); box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
-        .toggle-opt.selected-red { background: var(--bg-card); color: #DC2626; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
-
+        body { background: #111; color: white; font-family: sans-serif; padding: 20px; }
+        .log-box { background: #000; border: 1px solid #333; padding: 10px; margin-top: 20px; font-family: monospace; height: 300px; overflow-y: scroll; white-space: pre-wrap; }
+        .btn { background: #22c55e; color: white; border: none; padding: 15px; width: 100%; font-size: 18px; font-weight: bold; margin-top: 20px; border-radius: 8px; cursor: pointer; }
+        .error { color: #ff6b6b; }
+        .success { color: #4ade80; }
+        .loading-screen { text-align: center; margin-top: 100px; }
     </style>
 </head>
 <body>
@@ -121,7 +27,7 @@
         import { getFirestore, collection, addDoc, query, orderBy, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
         import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js";
         
- // Your web app's Firebase configuration
+  // Your web app's Firebase configuration
 const firebaseConfig = {
   apiKey: "AIzaSyBPBps7eOq5gqyT5LuOnUGJkhPumBbZh-w",
   authDomain: "scratch-d0420.firebaseapp.com",
@@ -134,305 +40,129 @@ const firebaseConfig = {
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
 
+        window.logToScreen = (msg, type = 'info') => {
+            const el = document.getElementById('debug-log');
+            if (el) {
+                const line = document.createElement('div');
+                line.textContent = `> ${msg}`;
+                if (type === 'error') line.className = 'error';
+                if (type === 'success') line.className = 'success';
+                el.appendChild(line);
+            }
+            console.log(msg);
+        };
+
         try {
             const app = initializeApp(firebaseConfig);
-            const db = getFirestore(app);
-            const auth = getAuth(app);
-            const provider = new GoogleAuthProvider();
-
-            window.db = db;
-            window.auth = auth;
-            window.provider = provider;
+            window.db = getFirestore(app);
+            window.auth = getAuth(app);
+            window.provider = new GoogleAuthProvider();
             window.ops = { collection, addDoc, query, orderBy, onSnapshot, serverTimestamp, signInWithPopup, signOut, onAuthStateChanged };
+            window.firebaseInitSuccess = true;
         } catch (e) {
-            console.error("Firebase Init Error:", e);
-            window.initError = e.message;
+            window.firebaseInitError = e.message;
         }
     </script>
 
     <script type="text/babel">
-        const { useState, useEffect, useMemo } = React;
+        const { useState, useEffect } = React;
 
-        function App() {
-            const [user, setUser] = useState(null);
-            const [loading, setLoading] = useState(true);
-            const [errorMsg, setErrorMsg] = useState("");
-            const [deferredPrompt, setDeferredPrompt] = useState(null);
-            const [darkMode, setDarkMode] = useState(localStorage.getItem('theme') === 'dark');
+        function DebugApp() {
+            const [status, setStatus] = useState("Initializing...");
+            const [logs, setLogs] = useState([]);
+            const [showLogin, setShowLogin] = useState(false);
 
-            // 1. Handle Dark Mode
+            const addLog = (msg, isError = false) => {
+                const timestamp = new Date().toLocaleTimeString();
+                setLogs(prev => [...prev, { time: timestamp, msg, isError }]);
+            };
+
             useEffect(() => {
-                if (darkMode) {
-                    document.body.classList.add('dark-mode');
-                    localStorage.setItem('theme', 'dark');
-                } else {
-                    document.body.classList.remove('dark-mode');
-                    localStorage.setItem('theme', 'light');
-                }
-            }, [darkMode]);
-
-            // 2. Handle Install Prompt
-            useEffect(() => {
-                window.addEventListener('beforeinstallprompt', (e) => {
-                    e.preventDefault();
-                    setDeferredPrompt(e);
-                });
-            }, []);
-
-            // 3. Handle Auth & Loading Timeout
-            useEffect(() => {
-                if (window.initError) {
-                    setErrorMsg("Config Error: " + window.initError);
-                    setLoading(false);
-                    return;
-                }
-                if (!window.ops) {
-                    setErrorMsg("Firebase libraries failed to load.");
-                    setLoading(false);
+                // 1. Check Config
+                if (window.firebaseInitError) {
+                    setStatus("CRITICAL ERROR");
+                    addLog("Firebase Config Failed: " + window.firebaseInitError, true);
                     return;
                 }
                 
-                // Timeout Warning
-                const timer = setTimeout(() => {
-                    if (loading) setErrorMsg("Stuck loading? Check 'Authorized Domains' in Firebase Console.");
-                }, 4000);
+                addLog("Firebase Config Loaded.");
 
-                const unsubscribe = window.ops.onAuthStateChanged(window.auth, (u) => {
-                    setUser(u);
-                    setLoading(false);
-                    clearTimeout(timer);
-                });
-                return () => { unsubscribe(); clearTimeout(timer); };
+                // 2. Check Auth Connection
+                if (!window.ops) {
+                    addLog("Libraries not loaded yet...", true);
+                    return;
+                }
+
+                addLog("Listening for Auth state...");
+                
+                const unsubscribe = window.ops.onAuthStateChanged(window.auth, 
+                    (user) => {
+                        if (user) {
+                            setStatus("Logged In");
+                            addLog("User found: " + user.email, false);
+                            addLog("SUCCESS! App should work.", false);
+                        } else {
+                            setStatus("Ready to Login");
+                            addLog("No user signed in.", false);
+                            setShowLogin(true);
+                        }
+                    }, 
+                    (error) => {
+                        addLog("Auth Error: " + error.message, true);
+                    }
+                );
+
+                // Force timeout
+                setTimeout(() => {
+                    if (status === "Initializing...") {
+                        setStatus("Timed Out");
+                        addLog("TIMEOUT: Google did not respond in 5 seconds.", true);
+                        addLog("Possibilities:\n1. 'Authorized Domains' is missing 'photified.github.io'\n2. API Key is invalid.\n3. Browser is blocking 3rd party cookies.", true);
+                        setShowLogin(true); // Let you try anyway
+                    }
+                }, 5000);
+
+                return unsubscribe;
             }, []);
 
             const handleLogin = async () => {
+                addLog("Attempting Popup Login...");
                 try {
                     await window.ops.signInWithPopup(window.auth, window.provider);
                 } catch (e) {
-                    alert("Login Error: " + e.message);
+                    addLog("LOGIN FAILED: " + e.message, true);
+                    if (e.message.includes("unauthorized domain")) {
+                        addLog("FIX: Go to Firebase Console -> Auth -> Settings -> Authorized Domains. Add 'photified.github.io'", true);
+                    }
                 }
             };
 
-            const handleInstall = () => {
-                if (deferredPrompt) {
-                    deferredPrompt.prompt();
-                    deferredPrompt.userChoice.then((result) => {
-                        if (result.outcome === 'accepted') setDeferredPrompt(null);
-                    });
-                } else {
-                    alert("Install not available. Use your browser menu -> Add to Home Screen.");
-                }
-            };
-
-            if (loading) return (
-                <div className="login-screen">
-                    <div>Loading...</div>
-                    {errorMsg && <div className="error-box">{errorMsg}</div>}
-                </div>
-            );
-
-            if (!user) {
-                return (
-                    <div className="login-screen">
-                        <div style={{marginBottom: 40}}>
-                            <h1 style={{fontFamily: 'Times New Roman', fontSize: 48, marginBottom: 8}}>Scratch</h1>
-                            <p style={{opacity: 0.8, letterSpacing: 2, textTransform: 'uppercase', fontSize: 12}}>The Gentlemen's Ledger</p>
-                        </div>
-                        <button className="btn-full" style={{background:'white', color:'var(--primary)'}} onClick={handleLogin}>
-                            Sign in with Google
-                        </button>
-                        {errorMsg && <div className="error-box" style={{color:'white'}}>{errorMsg}</div>}
-                    </div>
-                );
-            }
-
-            return <MainApp user={user} darkMode={darkMode} setDarkMode={setDarkMode} installApp={handleInstall} promptAvailable={!!deferredPrompt} />;
-        }
-
-        function MainApp({ user, darkMode, setDarkMode, installApp, promptAvailable }) {
-            const [view, setView] = useState('ledger'); 
-            const [bets, setBets] = useState([]);
-            const [modalOpen, setModalOpen] = useState(false);
-
-            useEffect(() => {
-                const q = window.ops.query(
-                    window.ops.collection(window.db, "bets"), 
-                    window.ops.orderBy("createdAt", "desc")
-                );
-                return window.ops.onSnapshot(q, (snapshot) => {
-                    setBets(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
-                });
-            }, []);
-
-            const stats = useMemo(() => {
-                let balance = 0;
-                bets.forEach(b => {
-                    const am = b.amount || 0;
-                    if (b.winner === 'Me') balance += am;
-                    else balance -= am;
-                });
-                return balance;
-            }, [bets]);
-
-            const handleAddBet = async (type, amount, winner) => {
-                try {
-                    await window.ops.addDoc(window.ops.collection(window.db, "bets"), {
-                        type, amount, winner,
-                        createdBy: user.uid,
-                        createdAt: window.ops.serverTimestamp()
-                    });
-                    setModalOpen(false);
-                } catch (e) { alert(e.message); }
-            };
-
             return (
-                <div className="app-container">
-                    <header className="header">
-                        <div className="brand">
-                            <h1>Scratch</h1>
-                        </div>
-                        <div className="header-actions">
-                            <div className="icon-btn" onClick={() => setView('settings')}>
-                                <i data-lucide="settings" color="white"></i>
-                            </div>
-                        </div>
-                    </header>
-
-                    <div className="nav-tabs">
-                        <div className={`nav-item ${view === 'ledger' ? 'active' : ''}`} onClick={() => setView('ledger')}>Ledger</div>
-                        <div className={`nav-item ${view === 'settings' ? 'active' : ''}`} onClick={() => setView('settings')}>Settings</div>
+                <div style={{maxWidth: 500, margin: '0 auto'}}>
+                    <h1>Scratch Debugger</h1>
+                    <div style={{fontSize: 24, fontWeight: 'bold', marginBottom: 20, color: status === 'Logged In' ? '#4ade80' : 'white'}}>
+                        Status: {status}
                     </div>
 
-                    {/* LEDGER VIEW */}
-                    {view === 'ledger' && (
-                        <div className="content">
-                            <div className="hero-card">
-                                <div className="hero-label">Net Balance</div>
-                                <div className={`hero-amount ${stats >= 0 ? 'text-green' : 'text-red'}`}>
-                                    {stats >= 0 ? '+' : '-'}${Math.abs(stats)}
-                                </div>
-                            </div>
-                            <div className="section-title">
-                                <i data-lucide="history" size="18"></i> Recent Activity
-                            </div>
-                            <div className="feed-list">
-                                {bets.map(bet => (
-                                    <div key={bet.id} className="bet-row">
-                                        <div className="bet-icon">
-                                            <i data-lucide="trophy" size="20"></i>
-                                        </div>
-                                        <div className="bet-info">
-                                            <div className="bet-type">{bet.type}</div>
-                                            <div className="bet-meta">{bet.winner === 'Me' ? 'You won' : 'Dave won'}</div>
-                                        </div>
-                                        <div className={`bet-val ${bet.winner === 'Me' ? 'text-green' : 'text-red'}`}>
-                                            {bet.winner === 'Me' ? '+' : '-'}${bet.amount}
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-                            <button className="fab" onClick={() => setModalOpen(true)}>
-                                <i data-lucide="plus" size="32"></i>
-                            </button>
-                        </div>
-                    )}
-
-                    {/* SETTINGS VIEW */}
-                    {view === 'settings' && (
-                        <div className="content settings-view">
-                            <div className="profile-header">
-                                <img src={user.photoURL} className="profile-lg" />
-                                <h2>{user.displayName}</h2>
-                                <p style={{color:'var(--text-sub)', fontSize: 14}}>{user.email}</p>
-                            </div>
-
-                            <div className="settings-card">
-                                <div className="settings-row">
-                                    <span className="settings-label">Dark Mode</span>
-                                    <input 
-                                        type="checkbox" 
-                                        checked={darkMode} 
-                                        onChange={() => setDarkMode(!darkMode)}
-                                        style={{transform: 'scale(1.5)'}}
-                                    />
-                                </div>
-                            </div>
-
-                            {promptAvailable && (
-                                <button className="btn-full btn-primary" onClick={installApp}>
-                                    Install App
-                                </button>
-                            )}
-
-                            <button className="btn-full btn-outline" style={{borderColor:'#DC2626', color:'#DC2626'}} onClick={() => window.ops.signOut(window.auth)}>
-                                Sign Out
-                            </button>
-                        </div>
-                    )}
-
-                    {modalOpen && (
-                        <BetModal onClose={() => setModalOpen(false)} onSubmit={handleAddBet} />
-                    )}
-                </div>
-            );
-        }
-
-        function BetModal({ onClose, onSubmit }) {
-            const [winner, setWinner] = useState('Me');
-            const [amount, setAmount] = useState(5);
-            const [type, setType] = useState(null);
-
-            const presets = [
-                { label: "KP", sub: "Closest to Pin" },
-                { label: "Drive", sub: "Longest Drive" },
-                { label: "Sand", sub: "Sand Save" },
-                { label: "Skin", sub: "Hole Winner" },
-            ];
-
-            useEffect(() => { setTimeout(() => lucide.createIcons(), 100) }, []);
-
-            return (
-                <div className="modal-overlay">
-                    <div className="modal-content">
-                        <div style={{display:'flex', justifyContent:'space-between', marginBottom: 20}}>
-                            <h3 style={{fontFamily:'Times New Roman', fontSize:24, color:'var(--text-main)'}}>New Wager</h3>
-                            <div onClick={onClose} style={{cursor:'pointer'}}><i data-lucide="x" color="var(--text-main)"></i></div>
-                        </div>
-
-                        <label className="control-label">Who Won?</label>
-                        <div className="winner-toggle">
-                            <div className={`toggle-opt ${winner === 'Me' ? 'selected-green' : ''}`} onClick={() => setWinner('Me')}>Me</div>
-                            <div className={`toggle-opt ${winner === 'Opponent' ? 'selected-red' : ''}`} onClick={() => setWinner('Opponent')}>Dave</div>
-                        </div>
-
-                        <label className="control-label">Amount</label>
-                        <div className="chip-grid">
-                            {[1, 5, 10, 20, 50].map(val => (
-                                <div key={val} className={`chip ${amount === val ? 'active' : ''}`} onClick={() => setAmount(val)}>${val}</div>
-                            ))}
-                        </div>
-
-                        <label className="control-label">Bet Type</label>
-                        <div className="type-grid">
-                            {presets.map(p => (
-                                <div key={p.label} className={`type-card ${type === p.label ? 'active' : ''}`} onClick={() => setType(p.label)}>
-                                    <strong>{p.label}</strong>
-                                    <small>{p.sub}</small>
-                                </div>
-                            ))}
-                        </div>
-
-                        <button className="btn-full btn-primary" disabled={!type} onClick={() => onSubmit(type, amount, winner)}>
-                            Place Bet <i data-lucide="check-circle" size="18" style={{marginLeft:8, verticalAlign:'middle'}}></i>
+                    {showLogin && (
+                        <button className="btn" onClick={handleLogin}>
+                            Try Login Button
                         </button>
+                    )}
+
+                    <div className="log-box">
+                        {logs.map((l, i) => (
+                            <div key={i} className={l.isError ? "error" : "success"}>
+                                [{l.time}] {l.msg}
+                            </div>
+                        ))}
                     </div>
                 </div>
             );
         }
 
         const root = ReactDOM.createRoot(document.getElementById('root'));
-        root.render(<App />);
-        setInterval(() => lucide.createIcons(), 1000); 
+        root.render(<DebugApp />);
     </script>
 </body>
 </html>
