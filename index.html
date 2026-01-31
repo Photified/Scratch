@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Scratch - Golf Betting</title>
+    
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, sans-serif; }
+        body { background-color: #111827; color: white; -webkit-font-smoothing: antialiased; }
+        .app-container { max-width: 600px; margin: 0 auto; min-height: 100vh; position: relative; padding-bottom: 100px; }
+        
+        /* HEADER */
+        .header { padding: 24px; background: linear-gradient(180deg, #1f2937 0%, #111827 100%); }
+        .header h1 { font-size: 28px; font-weight: 800; }
+        .subtitle { color: #9ca3af; margin-bottom: 20px; }
+        .balance-card { background: #374151; padding: 20px; border-radius: 16px; text-align: center; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); }
+        .balance-card span { color: #9ca3af; font-size: 14px; display: block; margin-bottom: 4px; }
+        .balance-card h2 { font-size: 40px; font-weight: 900; }
+        
+        /* COLORS */
+        .text-green { color: #4ade80; }
+        .text-red { color: #f87171; }
+        
+        /* FEED */
+        .feed { padding: 16px; }
+        .bet-card { display: flex; align-items: center; background: #1f2937; padding: 16px; border-radius: 12px; margin-bottom: 12px; }
+        .icon-box { width: 40px; height: 40px; background: #374151; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-right: 12px; }
+        .bet-info { flex: 1; }
+        .bet-info h3 { font-size: 16px; margin-bottom: 2px; }
+        .winner-tag { font-size: 12px; color: #9ca3af; }
+        .amount { font-size: 18px; font-weight: bold; }
+        
+        /* BUTTONS */
+        .fab { position: fixed; bottom: 30px; right: 20px; width: 64px; height: 64px; border-radius: 50%; background: #22c55e; border: none; color: white; display: flex; align-items: center; justify-content: center; box-shadow: 0 10px 15px -3px rgba(34, 197, 94, 0.4); cursor: pointer; font-size: 30px; }
+        
+        /* MODAL */
+        .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.85); display: flex; align-items: flex-end; z-index: 50; }
+        .modal-content { background: #1f2937; width: 100%; border-radius: 24px 24px 0 0; padding: 24px; animation: slideUp 0.3s ease-out; }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
+        .close-btn { background: none; border: none; color: white; cursor: pointer; font-size: 24px; }
+        
+        /* CONTROLS */
+        .section-label { display: block; color: #9ca3af; font-size: 12px; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px; }
+        .toggle-row { display: flex; gap: 10px; margin-bottom: 20px; }
+        .toggle-btn { flex: 1; padding: 12px; border-radius: 10px; background: #374151; border: 2px solid transparent; color: #9ca3af; font-weight: bold; cursor: pointer; }
+        .toggle-btn.active { background: #14532d; color: #4ade80; border-color: #22c55e; }
+        .toggle-btn.active-red { background: #450a0a; color: #f87171; border-color: #ef4444; }
+        .amount-row { display: flex; justify-content: space-between; gap: 10px; margin-bottom: 24px; }
+        .amt-btn { flex: 1; padding: 12px 0; background: #374151; border: none; border-radius: 10px; color: #9ca3af; font-weight: bold; cursor: pointer; }
+        .amt-btn.selected { background: #22c55e; color: white; }
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        .preset-btn { background: #374151; padding: 16px; border-radius: 12px; border: none; color: white; text-align: center; cursor: pointer; }
+        .preset-btn strong { display: block; font-size: 18px; margin-bottom: 4px; }
+        .preset-btn small { color: #9ca3af; font-size: 12px; }
+        
+        @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
+        import { getFirestore, collection, addDoc, query, orderBy, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
+        
+      // Import the functions you need from the SDKs you need
+import { initializeApp } from "firebase/app";
+// TODO: Add SDKs for Firebase products that you want to use
+// https://firebase.google.com/docs/web/setup#available-libraries
+
+// Your web app's Firebase configuration
+const firebaseConfig = {
+  apiKey: "AIzaSyDHaYWM8qxH4TcGUSL7_BU4g3jdf3azGNY",
+  authDomain: "scratch-1230c.firebaseapp.com",
+  projectId: "scratch-1230c",
+  storageBucket: "scratch-1230c.firebasestorage.app",
+  messagingSenderId: "612622025557",
+  appId: "1:612622025557:web:db623ece76b9ce3e4ce5dc"
+};
+
+// Initialize Firebase
+const app = initializeApp(firebaseConfig);
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        // Expose DB to the React window so we can use it below
+        window.db = db;
+        window.firebaseOps = { collection, addDoc, query, orderBy, onSnapshot, serverTimestamp };
+    </script>
+
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+
+        function App() {
+            const [bets, setBets] = useState([]);
+            const [modalOpen, setModalOpen] = useState(false);
+            const [balance, setBalance] = useState(0);
+
+            useEffect(() => {
+                if (!window.db) return;
+                const { collection, query, orderBy, onSnapshot } = window.firebaseOps;
+                
+                const q = query(collection(window.db, "bets"), orderBy("createdAt", "desc"));
+                const unsubscribe = onSnapshot(q, (snapshot) => {
+                    const betsData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                    setBets(betsData);
+                    
+                    const total = betsData.reduce((acc, curr) => {
+                        return curr.winner === 'Me' ? acc + curr.amount : acc - curr.amount;
+                    }, 0);
+                    setBalance(total);
+                });
+                return unsubscribe;
+            }, []);
+
+            const handleAddBet = async (type, amount, winner) => {
+                const { collection, addDoc, serverTimestamp } = window.firebaseOps;
+                await addDoc(collection(window.db, "bets"), {
+                    type,
+                    amount: parseInt(amount),
+                    winner, 
+                    createdAt: serverTimestamp(),
+                });
+                setModalOpen(false);
+            };
+
+            return (
+                <div className="app-container">
+                    <header className="header">
+                        <h1>The Ledger</h1>
+                        <p className="subtitle">You vs. Dave</p>
+                        <div className="balance-card">
+                            <span>Current Balance</span>
+                            <h2 className={balance >= 0 ? "text-green" : "text-red"}>
+                                {balance >= 0 ? '+' : '-'}${Math.abs(balance)}
+                            </h2>
+                        </div>
+                    </header>
+
+                    <div className="feed">
+                        {bets.map(bet => (
+                            <div key={bet.id} className="bet-card">
+                                <div className="icon-box">🏆</div>
+                                <div className="bet-info">
+                                    <h3>{bet.type}</h3>
+                                    <span className="winner-tag">{bet.winner === 'Me' ? 'You Won' : 'Dave Won'}</span>
+                                </div>
+                                <div className={`amount ${bet.winner === 'Me' ? "text-green" : "text-red"}`}>
+                                    {bet.winner === 'Me' ? '+' : '-'}${bet.amount}
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+
+                    <button className="fab" onClick={() => setModalOpen(true)}>+</button>
+
+                    {modalOpen && <CreateBetModal onClose={() => setModalOpen(false)} onCreate={handleAddBet} />}
+                </div>
+            );
+        }
+
+        function CreateBetModal({ onClose, onCreate }) {
+            const [amount, setAmount] = useState(5);
+            const [winner, setWinner] = useState('Me');
+
+            const presets = [
+                { label: "KP", full: "Closest to Pin" },
+                { label: "Drive", full: "Longest Drive" },
+                { label: "Sand", full: "Sand Save" },
+                { label: "Skin", full: "Hole Winner" },
+            ];
+
+            return (
+                <div className="modal-overlay">
+                    <div className="modal-content">
+                        <div className="modal-header">
+                            <h2>New Wager</h2>
+                            <button onClick={onClose} className="close-btn">✕</button>
+                        </div>
+
+                        <label className="section-label">Who Won?</label>
+                        <div className="toggle-row">
+                            <button className={`toggle-btn ${winner === 'Me' ? 'active' : ''}`} onClick={() => setWinner('Me')}>Me</button>
+                            <button className={`toggle-btn ${winner === 'Opponent' ? 'active-red' : ''}`} onClick={() => setWinner('Opponent')}>Dave</button>
+                        </div>
+
+                        <label className="section-label">Amount</label>
+                        <div className="amount-row">
+                            {[1, 5, 10, 20].map(amt => (
+                                <button key={amt} className={`amt-btn ${amount === amt ? 'selected' : ''}`} onClick={() => setAmount(amt)}>${amt}</button>
+                            ))}
+                        </div>
+
+                        <label className="section-label">Bet Type</label>
+                        <div className="grid">
+                            {presets.map(p => (
+                                <button key={p.label} className="preset-btn" onClick={() => onCreate(p.full, amount, winner)}>
+                                    <strong>{p.label}</strong>
+                                    <small>{p.full}</small>
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
