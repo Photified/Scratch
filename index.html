@@ -29,7 +29,7 @@
         body { background-color: var(--bg-body); color: var(--text-main); font-family: var(--font-sans); transition: background 0.3s; }
         .app-container { max-width: 500px; margin: 0 auto; min-height: 100vh; background: var(--bg-card); display: flex; flex-direction: column; box-shadow: 0 0 20px rgba(0,0,0,0.05); }
         
-        /* HEADER & TABS */
+        /* HEADER */
         .header { background-color: var(--primary); padding: 16px 20px; color: white; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 50; height: 60px; }
         .brand h1 { font-family: var(--font-serif); font-size: 22px; font-weight: 700; letter-spacing: 0.5px; }
         .nav-tabs { display: flex; border-bottom: 1px solid var(--border); background: var(--bg-card); }
@@ -40,19 +40,20 @@
         /* CONTENT */
         .content { flex: 1; padding-bottom: 100px; }
         
-        /* NEW HERO GRID (BOXES) */
-        .hero-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; padding: 20px; border-bottom: 1px solid var(--border); background: var(--bg-body); }
+        /* HERO GRID (BOXES) - FIXED ALIGNMENT */
+        .hero-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; padding: 20px; border-bottom: 1px solid var(--border); background: var(--bg-body); }
         .hero-box { 
             background: var(--bg-card); border: 1px solid var(--border); border-radius: 16px; 
-            padding: 20px; display: flex; flex-direction: column; align-items: center; justify-content: center; 
-            height: 140px; box-shadow: 0 2px 4px rgba(0,0,0,0.03); text-align: center;
+            padding: 16px; display: flex; flex-direction: column; align-items: center; justify-content: center; 
+            height: 130px; /* Fixed height for alignment */
+            box-shadow: 0 2px 4px rgba(0,0,0,0.03); text-align: center;
         }
-        .box-label { font-size: 11px; fontWeight: 800; color: var(--text-sub); text-transform: uppercase; margin-bottom: 8px; letter-spacing: 0.5px; }
-        .box-val { font-family: var(--font-serif); font-size: 36px; font-weight: 700; line-height: 1; }
+        .box-label { font-size: 11px; fontWeight: 800; color: var(--text-sub); text-transform: uppercase; margin-bottom: 12px; letter-spacing: 0.5px; }
+        .box-val { font-family: var(--font-serif); font-size: 32px; font-weight: 700; line-height: 1; }
         
         /* PLUS BUTTON IN BOX */
         .plus-btn { 
-            width: 50px; height: 50px; border-radius: 50%; background: var(--primary); color: white; 
+            width: 48px; height: 48px; border-radius: 50%; background: var(--primary); color: white; 
             display: flex; align-items: center; justify-content: center; 
             box-shadow: 0 4px 10px rgba(0,89,76,0.3); transition: transform 0.1s; cursor: pointer;
         }
@@ -109,8 +110,6 @@
         /* LOGIN & SETUP */
         .login-screen { height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; text-align: center; padding: 20px; padding-top: 80px; }
         .loading-tip { font-size: 12px; opacity: 0.6; margin-top: 20px; color: #DC2626; display: none; }
-        
-        /* Header Action Icon */
         .icon-btn { cursor: pointer; padding: 8px; border-radius: 50%; transition: background 0.1s; }
         .icon-btn:active { background: rgba(255,255,255,0.1); }
     </style>
@@ -122,7 +121,6 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
         import { getFirestore, collection, addDoc, doc, updateDoc, getDocs, getDoc, setDoc, query, where, orderBy, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
         import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js";
-        
      // Your web app's Firebase configuration
 const firebaseConfig = {
   apiKey: "AIzaSyBPBps7eOq5gqyT5LuOnUGJkhPumBbZh-w",
@@ -251,24 +249,59 @@ const firebaseConfig = {
 
             const addFriend = async (friendUsername) => {
                 const cleanName = friendUsername.trim().toLowerCase().replace('@', '');
-                const q = window.ops.query(window.ops.collection(window.db, "users"), window.ops.where("username", "==", cleanName));
-                const snap = await window.ops.getDocs(q);
                 
-                if (snap.empty) return showAppAlert("Not Found", "User @" + cleanName + " not found.");
-                const friendData = snap.docs[0].data();
-                if(friendData.email === user.email) return showAppAlert("Error", "You can't add yourself!");
-                const newFriend = { 
-                    name: friendData.displayName || cleanName, 
-                    email: friendData.email, 
-                    username: cleanName,
-                    photoURL: friendData.photoURL
-                };
-                if(roster.some(r => r.username === cleanName)) return showAppAlert("Exists", "User already in your clubhouse.");
-                const newRoster = [...roster, newFriend];
-                setRoster(newRoster);
-                const userRef = window.ops.doc(window.db, "users", user.uid);
-                await window.ops.updateDoc(userRef, { roster: newRoster });
-                showAppAlert("Success", "Added @" + cleanName + " to your clubhouse!");
+                try {
+                    // 1. Find Friend
+                    const q = window.ops.query(window.ops.collection(window.db, "users"), window.ops.where("username", "==", cleanName));
+                    const snap = await window.ops.getDocs(q);
+                    
+                    if (snap.empty) return showAppAlert("Not Found", "User @" + cleanName + " not found.");
+                    const friendDoc = snap.docs[0];
+                    const friendData = friendDoc.data();
+                    
+                    if(friendData.email === user.email) return showAppAlert("Error", "You can't add yourself!");
+                    
+                    // 2. Add Friend to MY roster
+                    const newFriendForMe = { 
+                        name: friendData.displayName || cleanName, 
+                        email: friendData.email, 
+                        username: cleanName,
+                        photoURL: friendData.photoURL
+                    };
+                    
+                    if(roster.some(r => r.username === cleanName)) return showAppAlert("Exists", "User already in your clubhouse.");
+                    
+                    const myNewRoster = [...roster, newFriendForMe];
+                    setRoster(myNewRoster);
+                    
+                    const myRef = window.ops.doc(window.db, "users", user.uid);
+                    await window.ops.updateDoc(myRef, { roster: myNewRoster });
+
+                    // 3. Add ME to FRIEND'S roster (Bidirectional)
+                    const meForFriend = {
+                        name: user.displayName || username,
+                        email: user.email,
+                        username: username,
+                        photoURL: user.photoURL
+                    };
+
+                    const friendRef = window.ops.doc(window.db, "users", friendDoc.id);
+                    // We need to read their roster first to append, or use arrayUnion. 
+                    // Using array-modify pattern for simplicity with current structure.
+                    const friendSnap = await window.ops.getDoc(friendRef);
+                    if(friendSnap.exists()) {
+                        const theirRoster = friendSnap.data().roster || [];
+                        if(!theirRoster.some(r => r.username === username)) {
+                            const theirNewRoster = [...theirRoster, meForFriend];
+                            await window.ops.updateDoc(friendRef, { roster: theirNewRoster });
+                        }
+                    }
+
+                    showAppAlert("Connected!", "You and @" + cleanName + " are now connected.");
+
+                } catch (e) {
+                    showAppAlert("Error", "Connection failed: " + e.message);
+                }
             };
 
             const removeFriend = async (friendEmail) => {
@@ -331,7 +364,7 @@ const firebaseConfig = {
 
         function MainApp({ user, username, roster, onAddFriend, onRemoveFriend, showAppAlert, darkMode, setDarkMode, handleInstall, isStandalone }) {
             const [view, setView] = useState('ledger'); 
-            const [lastView, setLastView] = useState('ledger'); // Track where to return from settings
+            const [lastView, setLastView] = useState('ledger'); 
             const [viewFriend, setViewFriend] = useState(null); 
             const [bets, setBets] = useState([]);
             const [modalOpen, setModalOpen] = useState(false);
@@ -387,9 +420,9 @@ const firebaseConfig = {
                 }
             };
 
-            // Navigation Helpers
             const goSettings = () => {
                 setLastView(view);
+                setViewFriend(null); // Fix blank screen
                 setView('settings');
             };
             const goBack = () => {
@@ -544,7 +577,7 @@ const firebaseConfig = {
                                 const friendBalance = getStats(friendBets);
                                 return (
                                     <>
-                                        <div className="hero-card" style={{flexDirection:'column', textAlign:'center', gap:0}}>
+                                        <div className="hero-card" style={{display:'block', textAlign:'center', height:'auto'}}>
                                             <div style={{marginBottom:16}}>
                                                 <img src={viewFriend.photoURL || './images/logo192.png'} style={{width:64, height:64, borderRadius:'50%', border:'3px solid var(--primary)', objectFit:'cover'}} />
                                                 <h2 style={{marginTop:8, fontSize:22}}>{viewFriend.name}</h2>
