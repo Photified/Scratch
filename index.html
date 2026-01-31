@@ -30,48 +30,49 @@
         .app-container { max-width: 500px; margin: 0 auto; min-height: 100vh; background: var(--bg-card); display: flex; flex-direction: column; box-shadow: 0 0 20px rgba(0,0,0,0.05); }
         
         /* HEADER & TABS */
-        .header { background-color: var(--primary); padding: 16px 20px; color: white; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 10; }
+        .header { background-color: var(--primary); padding: 16px 20px; color: white; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 50; height: 60px; }
         .brand h1 { font-family: var(--font-serif); font-size: 22px; font-weight: 700; letter-spacing: 0.5px; }
         .nav-tabs { display: flex; border-bottom: 1px solid var(--border); background: var(--bg-card); }
-        .nav-item { flex: 1; text-align: center; padding: 16px; color: var(--text-sub); font-weight: 600; cursor: pointer; font-size: 13px; position: relative; }
+        .nav-item { flex: 1; text-align: center; padding: 16px; color: var(--text-sub); font-weight: 600; cursor: pointer; font-size: 14px; position: relative; }
         .nav-item.active { color: var(--primary); }
         .nav-item.active::after { content: ''; position: absolute; bottom: 0; left: 0; right: 0; height: 3px; background: var(--primary); border-radius: 3px 3px 0 0; }
 
         /* CONTENT */
         .content { flex: 1; padding-bottom: 100px; }
         
-        /* HERO CARD (Redesigned with Plus Button) */
-        .hero-card { padding: 32px 24px; background: var(--bg-card); border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
-        .hero-amount { font-family: var(--font-serif); font-size: 56px; font-weight: 700; line-height: 1; margin-top: 4px; }
+        /* NEW HERO GRID (BOXES) */
+        .hero-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; padding: 20px; border-bottom: 1px solid var(--border); background: var(--bg-body); }
+        .hero-box { 
+            background: var(--bg-card); border: 1px solid var(--border); border-radius: 16px; 
+            padding: 20px; display: flex; flex-direction: column; align-items: center; justify-content: center; 
+            height: 140px; box-shadow: 0 2px 4px rgba(0,0,0,0.03); text-align: center;
+        }
+        .box-label { font-size: 11px; fontWeight: 800; color: var(--text-sub); text-transform: uppercase; margin-bottom: 8px; letter-spacing: 0.5px; }
+        .box-val { font-family: var(--font-serif); font-size: 36px; font-weight: 700; line-height: 1; }
+        
+        /* PLUS BUTTON IN BOX */
+        .plus-btn { 
+            width: 50px; height: 50px; border-radius: 50%; background: var(--primary); color: white; 
+            display: flex; align-items: center; justify-content: center; 
+            box-shadow: 0 4px 10px rgba(0,89,76,0.3); transition: transform 0.1s; cursor: pointer;
+        }
+        .plus-btn:active { transform: scale(0.95); }
+
         .text-green { color: #059669; } .text-red { color: #DC2626; }
         
-        .add-wager-btn { 
-            width: 56px; height: 56px; border-radius: 50%; background: var(--primary); color: white; border: none; 
-            display: flex; align-items: center; justify-content: center; cursor: pointer; box-shadow: 0 4px 12px rgba(0,89,76,0.3); transition: transform 0.1s;
-        }
-        .add-wager-btn:active { transform: scale(0.95); }
-
-        /* FEED LIST (Boxed Style) */
+        /* FEED LIST */
         .feed-list { padding: 16px; }
-        .bet-row { 
-            display: flex; align-items: center; padding: 16px; 
-            border: 1px solid var(--border); border-radius: 12px; 
-            margin-bottom: 12px; background: var(--bg-card); 
-            box-shadow: 0 2px 4px rgba(0,0,0,0.02);
-        }
+        .bet-row { display: flex; align-items: center; padding: 16px; border: 1px solid var(--border); border-radius: 12px; margin-bottom: 12px; background: var(--bg-card); box-shadow: 0 2px 4px rgba(0,0,0,0.02); }
         .bet-icon { width: 42px; height: 42px; padding: 8px; background: var(--bg-body); border-radius: 10px; margin-right: 14px; border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; }
         .bet-icon img { width: 100%; height: 100%; object-fit: contain; }
         .bet-info { flex: 1; }
         .bet-val { font-family: var(--font-serif); font-size: 18px; font-weight: 700; }
 
-        /* CLUBHOUSE & SETTINGS */
+        /* SETTINGS & ROSTER */
         .settings-view { padding: 24px; }
         .settings-card { background: var(--bg-body); border-radius: 12px; border: 1px solid var(--border); padding: 16px; margin-bottom: 24px; }
         .settings-row { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid rgba(0,0,0,0.05); }
-        .settings-row:last-child { border-bottom: none; }
-        
         .roster-item { display: flex; align-items: center; padding: 12px 0; border-bottom: 1px solid rgba(0,0,0,0.05); cursor: pointer; }
-        .roster-item:active { opacity: 0.6; }
         .roster-avatar { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; margin-right: 12px; border: 2px solid var(--border); }
         .delete-btn { color: #DC2626; font-size: 18px; cursor: pointer; padding: 8px; margin-left: auto; }
         .add-row { display: flex; gap: 8px; margin-top: 12px; }
@@ -80,12 +81,11 @@
         .input-lg { font-size: 20px; padding: 16px; text-align: center; border: 2px solid var(--border); }
         .input-lg:focus { border-color: var(--primary); outline: none; }
 
-        /* SLIDER STYLING */
+        /* SLIDER & MODAL */
         input[type=range] { -webkit-appearance: none; width: 100%; background: transparent; }
         input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; height: 24px; width: 24px; border-radius: 50%; background: var(--primary); margin-top: -10px; box-shadow: 0 2px 6px rgba(0,0,0,0.2); }
         input[type=range]::-webkit-slider-runnable-track { width: 100%; height: 4px; background: var(--border); border-radius: 2px; }
 
-        /* MODAL */
         .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.6); backdrop-filter: blur(4px); display: flex; align-items: center; justify-content: center; z-index: 100; }
         .modal-bottom { align-items: flex-end; }
         .modal-content { background: var(--bg-card); width: 100%; max-width: 450px; border-radius: 24px; padding: 24px; max-height: 90vh; overflow-y: auto; box-shadow: 0 10px 40px rgba(0,0,0,0.2); }
@@ -102,7 +102,6 @@
         .type-img { width: 40px; height: 40px; margin-bottom: 8px; object-fit: contain; opacity: 0.7; }
         .type-card.active .type-img { opacity: 1; }
 
-        /* BUTTONS */
         .btn-full { width: 100%; padding: 16px; border-radius: 14px; font-weight: 700; font-size: 16px; cursor: pointer; text-align: center; border: none; transition: opacity 0.2s; }
         .btn-full:disabled { opacity: 0.5; cursor: not-allowed; }
         .btn-primary { background: var(--primary); color: white; }
@@ -110,6 +109,10 @@
         /* LOGIN & SETUP */
         .login-screen { height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; text-align: center; padding: 20px; padding-top: 80px; }
         .loading-tip { font-size: 12px; opacity: 0.6; margin-top: 20px; color: #DC2626; display: none; }
+        
+        /* Header Action Icon */
+        .icon-btn { cursor: pointer; padding: 8px; border-radius: 50%; transition: background 0.1s; }
+        .icon-btn:active { background: rgba(255,255,255,0.1); }
     </style>
 </head>
 <body>
@@ -120,7 +123,7 @@
         import { getFirestore, collection, addDoc, doc, updateDoc, getDocs, getDoc, setDoc, query, where, orderBy, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
         import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js";
         
-       // Your web app's Firebase configuration
+     // Your web app's Firebase configuration
 const firebaseConfig = {
   apiKey: "AIzaSyBPBps7eOq5gqyT5LuOnUGJkhPumBbZh-w",
   authDomain: "scratch-d0420.firebaseapp.com",
@@ -158,7 +161,6 @@ const firebaseConfig = {
             const [isStandalone, setIsStandalone] = useState(false);
             const [darkMode, setDarkMode] = useState(localStorage.getItem('theme') === 'dark');
 
-            // --- THEME & INSTALL ---
             useEffect(() => {
                 if (darkMode) {
                     document.body.classList.add('dark-mode');
@@ -170,18 +172,15 @@ const firebaseConfig = {
             }, [darkMode]);
 
             useEffect(() => {
-                // Check if running in PWA mode
                 if (window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true) {
                     setIsStandalone(true);
                 }
-
                 window.addEventListener('beforeinstallprompt', (e) => {
                     e.preventDefault();
                     setDeferredPrompt(e);
                 });
             }, []);
 
-            // --- AUTH ---
             useEffect(() => {
                 setGlobalAlert = setAlertState; 
                 const timer = setTimeout(() => {
@@ -279,7 +278,6 @@ const firebaseConfig = {
                 await window.ops.updateDoc(userRef, { roster: newRoster });
             };
 
-            // RENDER LOGIC
             const AlertModal = () => (
                 alertState.show ? (
                     <div className="modal-overlay" style={{zIndex:999}}>
@@ -333,6 +331,7 @@ const firebaseConfig = {
 
         function MainApp({ user, username, roster, onAddFriend, onRemoveFriend, showAppAlert, darkMode, setDarkMode, handleInstall, isStandalone }) {
             const [view, setView] = useState('ledger'); 
+            const [lastView, setLastView] = useState('ledger'); // Track where to return from settings
             const [viewFriend, setViewFriend] = useState(null); 
             const [bets, setBets] = useState([]);
             const [modalOpen, setModalOpen] = useState(false);
@@ -388,41 +387,60 @@ const firebaseConfig = {
                 }
             };
 
+            // Navigation Helpers
+            const goSettings = () => {
+                setLastView(view);
+                setView('settings');
+            };
+            const goBack = () => {
+                if(view === 'settings') setView(lastView);
+                else if(viewFriend) setViewFriend(null);
+            };
+
             return (
                 <div className="app-container">
                     <header className="header">
-                        <div className="brand">
-                            {viewFriend ? (
-                                <div onClick={() => setViewFriend(null)} style={{display:'flex', alignItems:'center', gap:8, cursor:'pointer'}}>
-                                    <i data-lucide="arrow-left" size="20"></i> {viewFriend.name}
-                                </div>
-                            ) : (
-                                <h1>Scratch</h1>
-                            )}
-                        </div>
+                        {view === 'settings' ? (
+                            <>
+                                <div className="icon-btn" onClick={goBack}><i data-lucide="arrow-left" color="white"></i></div>
+                                <div className="brand">Settings</div>
+                                <div style={{width:40}}></div>
+                            </>
+                        ) : viewFriend ? (
+                            <>
+                                <div className="icon-btn" onClick={() => setViewFriend(null)}><i data-lucide="arrow-left" color="white"></i></div>
+                                <div className="brand">{viewFriend.name}</div>
+                                <div style={{width:40}}></div>
+                            </>
+                        ) : (
+                            <>
+                                <div className="brand">Scratch</div>
+                                <div className="icon-btn" onClick={goSettings}><i data-lucide="settings" color="white"></i></div>
+                            </>
+                        )}
                     </header>
 
-                    {!viewFriend && (
+                    {view !== 'settings' && !viewFriend && (
                         <div className="nav-tabs">
                             <div className={`nav-item ${view === 'ledger' ? 'active' : ''}`} onClick={() => setView('ledger')}>My Ledger</div>
                             <div className={`nav-item ${view === 'clubhouse' ? 'active' : ''}`} onClick={() => setView('clubhouse')}>Clubhouse</div>
-                            <div className={`nav-item ${view === 'settings' ? 'active' : ''}`} onClick={() => setView('settings')}>Settings</div>
                         </div>
                     )}
 
                     {/* --- MY LEDGER --- */}
                     {!viewFriend && view === 'ledger' && (
                         <div className="content">
-                            <div className="hero-card">
-                                <div>
-                                    <div style={{fontSize:11, fontWeight:800, color:'var(--text-sub)', textTransform:'uppercase', marginBottom:2}}>Net Balance</div>
-                                    <div className={`hero-amount ${stats >= 0 ? 'text-green' : 'text-red'}`}>
+                            <div className="hero-grid">
+                                <div className="hero-box">
+                                    <div className="box-label">NET BALANCE</div>
+                                    <div className={`box-val ${stats >= 0 ? 'text-green' : 'text-red'}`}>
                                         {stats >= 0 ? '+' : '-'}${Math.abs(stats)}
                                     </div>
                                 </div>
-                                <button className="add-wager-btn" onClick={() => setModalOpen(true)}>
-                                    <i data-lucide="plus" size="28"></i>
-                                </button>
+                                <div className="hero-box" onClick={() => setModalOpen(true)} style={{cursor:'pointer'}}>
+                                    <div className="box-label">PLACE WAGER</div>
+                                    <div className="plus-btn"><i data-lucide="plus" size="28"></i></div>
+                                </div>
                             </div>
                             
                             <div style={{padding:'24px 20px 10px', fontWeight:700, display:'flex', alignItems:'center', gap:8}}>
@@ -486,7 +504,7 @@ const firebaseConfig = {
                     )}
 
                     {/* --- SETTINGS --- */}
-                    {!viewFriend && view === 'settings' && (
+                    {view === 'settings' && (
                         <div className="content settings-view">
                             <div style={{textAlign:'center', marginBottom:30}}>
                                 <img src={user.photoURL} style={{width:80, borderRadius:'50%', border:'3px solid var(--primary)'}} />
@@ -518,21 +536,17 @@ const firebaseConfig = {
                         </div>
                     )}
 
-                    {/* --- FRIEND PROFILE VIEW --- */}
+                    {/* --- FRIEND PROFILE --- */}
                     {viewFriend && (
                         <div className="content">
                             {(() => {
                                 const friendBets = bets.filter(b => b.participants && b.participants.includes(viewFriend.email));
                                 const friendBalance = getStats(friendBets);
-                                
                                 return (
                                     <>
-                                        <div className="hero-card" style={{display:'block', textAlign:'center'}}>
+                                        <div className="hero-card" style={{flexDirection:'column', textAlign:'center', gap:0}}>
                                             <div style={{marginBottom:16}}>
-                                                {viewFriend.photoURL ? 
-                                                    <img src={viewFriend.photoURL} style={{width:64, height:64, borderRadius:'50%', border:'3px solid var(--primary)', objectFit:'cover'}} />
-                                                    : <div style={{width:64, height:64, borderRadius:'50%', background:'var(--border)', margin:'0 auto'}}></div>
-                                                }
+                                                <img src={viewFriend.photoURL || './images/logo192.png'} style={{width:64, height:64, borderRadius:'50%', border:'3px solid var(--primary)', objectFit:'cover'}} />
                                                 <h2 style={{marginTop:8, fontSize:22}}>{viewFriend.name}</h2>
                                                 <div style={{fontSize:14, color:'var(--text-sub)', fontWeight:'bold'}}>@{viewFriend.username}</div>
                                             </div>
