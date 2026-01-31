@@ -56,7 +56,6 @@
         .delete-btn { color: #DC2626; font-size: 18px; cursor: pointer; padding: 4px; }
         .add-row { display: flex; gap: 8px; margin-top: 12px; }
         
-        /* CLEANER INPUTS */
         .input-std { padding: 12px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg-card); color: var(--text-main); font-size: 16px; -webkit-appearance: none; }
         .input-lg { font-size: 20px; padding: 16px; text-align: center; border: 2px solid var(--border); }
         .input-lg:focus { border-color: var(--primary); outline: none; }
@@ -97,7 +96,7 @@
         import { getFirestore, collection, addDoc, doc, updateDoc, getDocs, getDoc, setDoc, query, where, orderBy, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
         import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js";
         
-       // Your web app's Firebase configuration
+      // Your web app's Firebase configuration
 const firebaseConfig = {
   apiKey: "AIzaSyBPBps7eOq5gqyT5LuOnUGJkhPumBbZh-w",
   authDomain: "scratch-d0420.firebaseapp.com",
@@ -119,7 +118,6 @@ const firebaseConfig = {
     <script type="text/babel">
         const { useState, useEffect, useMemo } = React;
 
-        // GLOBAL ALERT HELPER
         let setGlobalAlert = null;
         const showAppAlert = (title, msg) => {
             if(setGlobalAlert) setGlobalAlert({ show: true, title, msg });
@@ -179,7 +177,6 @@ const firebaseConfig = {
                 setIsSavingUser(true); 
 
                 try {
-                    // Check Uniqueness
                     const q = window.ops.query(window.ops.collection(window.db, "users"), window.ops.where("username", "==", cleanName));
                     const snap = await window.ops.getDocs(q);
                     
@@ -188,13 +185,12 @@ const firebaseConfig = {
                         return showAppAlert("Taken", "That username is already taken. Try another.");
                     }
 
-                    // Save & Redirect
                     const userRef = window.ops.doc(window.db, "users", user.uid);
                     await window.ops.setDoc(userRef, { username: cleanName }, { merge: true });
                     setUsername(cleanName); 
                 } catch(e) {
                     setIsSavingUser(false);
-                    showAppAlert("Database Error", "Could not save. Check your Firestore Rules in Firebase Console.");
+                    showAppAlert("Database Error", "Could not save. Check your Firestore Rules.");
                 }
             };
 
@@ -259,7 +255,6 @@ const firebaseConfig = {
                 );
             }
 
-            // USERNAME SETUP
             if (!username) {
                 return (
                     <div className="login-screen">
@@ -294,13 +289,16 @@ const firebaseConfig = {
             const [modalOpen, setModalOpen] = useState(false);
 
             useEffect(() => {
+                // FIXED QUERY: REMOVED orderBy TO FIX MISSING INDEX ISSUE
                 const q = window.ops.query(
                     window.ops.collection(window.db, "bets"), 
-                    window.ops.where("participants", "array-contains", user.email),
-                    window.ops.orderBy("createdAt", "desc")
+                    window.ops.where("participants", "array-contains", user.email)
                 );
+                
                 return window.ops.onSnapshot(q, (snapshot) => {
                     const allBets = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                    // Client-Side Sort (Newest First)
+                    allBets.sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
                     setBets(allBets);
                 });
             }, [user]);
