@@ -42,7 +42,7 @@
         /* CONTENT */
         .content { flex: 1; padding-bottom: 100px; overflow-y: auto; }
         
-        /* HERO GRID */
+        /* HERO GRID - Boxes */
         .hero-grid { display: flex; gap: 16px; padding: 20px; border-bottom: 1px solid var(--border); background: var(--bg-body); }
         .hero-box { 
             flex: 1; height: 140px; 
@@ -71,7 +71,7 @@
         .bet-info { flex: 1; }
         .bet-val { font-family: var(--font-serif); font-size: 18px; font-weight: 700; }
 
-        /* SETTINGS */
+        /* SETTINGS & ROSTER */
         .settings-view { padding: 24px; }
         .settings-card { background: var(--bg-body); border-radius: 12px; border: 1px solid var(--border); padding: 16px; margin-bottom: 24px; }
         .settings-row { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid rgba(0,0,0,0.05); }
@@ -106,11 +106,11 @@
         .btn-full:disabled { opacity: 0.5; cursor: not-allowed; }
         .btn-primary { background: var(--primary); color: white; }
 
+        /* UTILS */
         .login-screen { height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; text-align: center; padding: 20px; padding-top: 80px; }
         .loading-tip { font-size: 12px; opacity: 0.6; margin-top: 20px; color: #DC2626; display: none; }
         .icon-btn { cursor: pointer; padding: 8px; border-radius: 50%; transition: background 0.1s; }
         .icon-btn:active { background: rgba(255,255,255,0.1); }
-        
         input[type=range] { -webkit-appearance: none; width: 100%; background: transparent; }
         input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; height: 24px; width: 24px; border-radius: 50%; background: var(--primary); margin-top: -10px; box-shadow: 0 2px 6px rgba(0,0,0,0.2); }
         input[type=range]::-webkit-slider-runnable-track { width: 100%; height: 4px; background: var(--border); border-radius: 2px; }
@@ -124,7 +124,7 @@
         import { getFirestore, collection, addDoc, doc, updateDoc, getDocs, getDoc, setDoc, query, where, orderBy, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
         import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js";
         
-// Your web app's Firebase configuration
+     // Your web app's Firebase configuration
 const firebaseConfig = {
   apiKey: "AIzaSyBPBps7eOq5gqyT5LuOnUGJkhPumBbZh-w",
   authDomain: "scratch-d0420.firebaseapp.com",
@@ -146,7 +146,7 @@ const firebaseConfig = {
     <script type="text/babel">
         const { useState, useEffect, useMemo } = React;
 
-        // --- COMPONENTS DEFINED OUTSIDE MAIN APP ---
+        // --- SUB-COMPONENTS ---
 
         const LedgerView = ({ bets, user, onOpenModal, stats }) => {
             const getBetContext = (bet) => {
@@ -403,12 +403,6 @@ const firebaseConfig = {
 
         // --- MAIN APP ---
 
-        let setGlobalAlert = null;
-        const showAppAlert = (title, msg) => {
-            if(setGlobalAlert) setGlobalAlert({ show: true, title, msg });
-            else alert(msg);
-        };
-
         function App() {
             const [user, setUser] = useState(null);
             const [username, setUsername] = useState(null);
@@ -430,7 +424,6 @@ const firebaseConfig = {
             }, []);
 
             useEffect(() => {
-                setGlobalAlert = setAlertState; 
                 if (!window.ops) return;
                 const unsubscribe = window.ops.onAuthStateChanged(window.auth, async (u) => {
                     if (u) {
@@ -451,6 +444,8 @@ const firebaseConfig = {
                 return () => { unsubscribe(); }
             }, []);
 
+            // Handlers
+            const showAppAlert = (title, msg) => setAlertState({ show: true, title, msg });
             const handleLogin = async () => { try { await window.ops.signInWithPopup(window.auth, window.provider); } catch (e) { showAppAlert("Login Error", e.message); } };
             const handleInstall = () => { if (deferredPrompt) { deferredPrompt.prompt(); deferredPrompt.userChoice.then((result) => { if (result.outcome === 'accepted') setDeferredPrompt(null); }); } else { showAppAlert("Install", "To install: Tap the Share/Menu button in your browser, then 'Add to Home Screen'."); } };
             
