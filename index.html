@@ -56,7 +56,9 @@
         .roster-item:last-child { border-bottom: none; }
         .delete-btn { color: #DC2626; font-size: 18px; cursor: pointer; padding: 4px; }
         .add-row { display: flex; gap: 8px; margin-top: 12px; }
-        .input-std { flex: 1; padding: 10px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg-card); color: var(--text-main); }
+        
+        /* INPUT FIELD FIXED - REMOVED FLEX:1 */
+        .input-std { padding: 12px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg-card); color: var(--text-main); font-size: 16px; }
 
         /* MODAL */
         .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.6); backdrop-filter: blur(4px); display: flex; align-items: flex-end; z-index: 100; }
@@ -78,7 +80,7 @@
         .btn-primary { background: var(--primary); color: white; }
 
         /* LOGIN & SETUP */
-        .login-screen { height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 20px; }
+        .login-screen { height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; text-align: center; padding: 20px; padding-top: 80px; }
         .loading-tip { font-size: 12px; opacity: 0.6; margin-top: 20px; color: #DC2626; display: none; }
     </style>
 </head>
@@ -90,7 +92,7 @@
         import { getFirestore, collection, addDoc, doc, updateDoc, getDocs, getDoc, setDoc, query, where, orderBy, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
         import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js";
         
-       // Your web app's Firebase configuration
+      // Your web app's Firebase configuration
 const firebaseConfig = {
   apiKey: "AIzaSyBPBps7eOq5gqyT5LuOnUGJkhPumBbZh-w",
   authDomain: "scratch-d0420.firebaseapp.com",
@@ -202,7 +204,7 @@ const firebaseConfig = {
             };
 
             if (loading) return (
-                <div className="login-screen">
+                <div className="login-screen" style={{justifyContent: 'center', paddingTop: 0}}>
                     <div>Loading...</div>
                     <div id="loading-tip" className="loading-tip">Taking a long time? <br/>Disable AdBlocker or try Incognito.</div>
                 </div>
@@ -210,7 +212,7 @@ const firebaseConfig = {
 
             if (!user) {
                 return (
-                    <div className="login-screen">
+                    <div className="login-screen" style={{justifyContent: 'center', paddingTop: 0}}>
                         <img src="./images/logo192.png" style={{width:80, borderRadius:16, marginBottom:20}} onError={(e)=>e.target.style.display='none'}/>
                         <h1 style={{fontFamily:'Times New Roman', fontSize:48}}>Scratch</h1>
                         <p style={{opacity:0.6, letterSpacing:2, fontSize:12, marginBottom:40}}>THE GENTLEMEN'S LEDGER</p>
@@ -221,23 +223,23 @@ const firebaseConfig = {
                 );
             }
 
-            // --- REFINED USERNAME SETUP SCREEN ---
+            // --- USERNAME SETUP SCREEN (FIXED UI) ---
             if (!username) {
                 return (
                     <div className="login-screen">
                         {/* Logo */}
-                        <img src="./images/logo192.png" style={{width: 80, borderRadius: 16, marginBottom: 16, boxShadow: '0 4px 12px rgba(0,0,0,0.1)'}} />
+                        <img src="./images/logo192.png" style={{width: 80, borderRadius: 16, marginBottom: 24, boxShadow: '0 4px 12px rgba(0,0,0,0.1)'}} />
                         
-                        {/* Bold Subheader */}
-                        <div style={{fontFamily: 'Times New Roman', fontWeight: 'bold', fontSize: 24, marginBottom: 32}}>
+                        {/* Bold Header */}
+                        <div style={{fontFamily: 'Times New Roman', fontWeight: 'bold', fontSize: 26, marginBottom: 40, color: 'var(--text-main)'}}>
                             The Gentlemen's Wager
                         </div>
 
-                        <h3 style={{marginBottom: 8}}>Create Username</h3>
+                        <h3 style={{marginBottom: 8, fontSize: 18}}>Create Username</h3>
                         <p style={{opacity: 0.6, fontSize: 14, marginBottom: 24}}>This is how friends will find you.</p>
                         
-                        {/* Clean Input */}
-                        <input id="usernameInput" className="input-std" placeholder="e.g. Tiger" style={{maxWidth: 300, width: '100%', padding: 16, fontSize: 18, textAlign: 'center', marginBottom: 20}} />
+                        {/* Clean Input - Fixed Height */}
+                        <input id="usernameInput" className="input-std" placeholder="e.g. Tiger" style={{maxWidth: 300, width: '100%', padding: 16, fontSize: 18, textAlign: 'center', marginBottom: 24}} />
                         
                         <button className="btn-full btn-primary" style={{maxWidth: 300}} onClick={() => handleSetUsername(document.getElementById('usernameInput').value)}>
                             Set Username
@@ -360,7 +362,7 @@ const firebaseConfig = {
                                     </div>
                                 ))}
                                 <div className="add-row">
-                                    <input id="newFriendUser" className="input-std" placeholder="Search Username..." />
+                                    <input id="newFriendUser" className="input-std" style={{flex:1}} placeholder="Search Username..." />
                                     <button className="btn-primary" style={{borderRadius:8, padding:'0 16px', border:'none', cursor:'pointer'}} onClick={() => {
                                         const val = document.getElementById('newFriendUser').value;
                                         if(val) { onAddFriend(val); document.getElementById('newFriendUser').value = ''; }
