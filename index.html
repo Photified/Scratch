@@ -34,12 +34,13 @@
         .brand h1 { font-family: var(--font-serif); font-size: 22px; font-weight: 700; letter-spacing: 0.5px; margin: 0; }
         
         /* TABS */
-        .nav-tabs { display: flex; border-top: 1px solid var(--border); background: var(--bg-card); position: sticky; bottom: 0; padding-bottom: env(safe-area-inset-bottom); z-index: 40; }
-        .nav-item { flex: 1; text-align: center; padding: 16px 4px; color: var(--text-sub); font-weight: 600; cursor: pointer; font-size: 11px; display: flex; flex-direction: column; align-items: center; gap: 4px; }
+        .nav-tabs { display: flex; border-bottom: 1px solid var(--border); background: var(--bg-card); }
+        .nav-item { flex: 1; text-align: center; padding: 16px; color: var(--text-sub); font-weight: 600; cursor: pointer; font-size: 14px; position: relative; }
         .nav-item.active { color: var(--primary); }
-        
+        .nav-item.active::after { content: ''; position: absolute; bottom: 0; left: 0; right: 0; height: 3px; background: var(--primary); border-radius: 3px 3px 0 0; }
+
         /* CONTENT */
-        .content { flex: 1; padding-bottom: 20px; overflow-y: auto; }
+        .content { flex: 1; padding-bottom: 100px; overflow-y: auto; }
         
         /* HERO GRID */
         .hero-grid { display: flex; gap: 16px; padding: 20px; border-bottom: 1px solid var(--border); background: var(--bg-body); }
@@ -60,15 +61,19 @@
         }
         .plus-btn:active { transform: scale(0.95); }
 
-        .text-green { color: #059669; } .text-red { color: #DC2626; }
+        .text-green { color: #059669; } .text-red { color: #DC2626; } .text-warn { color: #D97706; }
         
         /* LISTS */
         .feed-list { padding: 16px; }
-        .bet-row { display: flex; align-items: center; padding: 16px; border: 1px solid var(--border); border-radius: 12px; margin-bottom: 12px; background: var(--bg-card); box-shadow: 0 2px 4px rgba(0,0,0,0.02); }
+        .bet-row { display: flex; align-items: center; padding: 16px; border: 1px solid var(--border); border-radius: 12px; margin-bottom: 12px; background: var(--bg-card); box-shadow: 0 2px 4px rgba(0,0,0,0.02); cursor: pointer; transition: background 0.2s; }
+        .bet-row:active { background: var(--bg-body); }
         .bet-icon { width: 42px; height: 42px; padding: 8px; background: var(--bg-body); border-radius: 10px; margin-right: 14px; border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; }
         .bet-icon img { width: 100%; height: 100%; object-fit: contain; }
         .bet-info { flex: 1; }
         .bet-val { font-family: var(--font-serif); font-size: 18px; font-weight: 700; }
+        .status-badge { font-size: 10px; font-weight: 700; padding: 4px 8px; border-radius: 4px; margin-left: 8px; text-transform: uppercase; }
+        .status-pending { background: #FEF3C7; color: #D97706; }
+        .status-verified { background: #D1FAE5; color: #059669; }
 
         /* SETTINGS & ROSTER */
         .settings-view { padding: 24px; }
@@ -103,11 +108,14 @@
         .btn-full { width: 100%; padding: 16px; border-radius: 14px; font-weight: 700; font-size: 16px; cursor: pointer; text-align: center; border: none; transition: opacity 0.2s; }
         .btn-full:disabled { opacity: 0.5; cursor: not-allowed; }
         .btn-primary { background: var(--primary); color: white; }
+        .btn-secondary { background: var(--bg-body); color: var(--text-main); border: 1px solid var(--border); }
+        .btn-danger { background: #fee2e2; color: #dc2626; border: 1px solid #fecaca; }
 
         .login-screen { height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; text-align: center; padding: 20px; padding-top: 80px; }
         .loading-tip { font-size: 12px; opacity: 0.6; margin-top: 20px; color: #DC2626; display: none; }
         .icon-btn { cursor: pointer; padding: 8px; border-radius: 50%; transition: background 0.1s; }
         .icon-btn:active { background: rgba(255,255,255,0.1); }
+        
         input[type=range] { -webkit-appearance: none; width: 100%; background: transparent; }
         input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; height: 24px; width: 24px; border-radius: 50%; background: var(--primary); margin-top: -10px; box-shadow: 0 2px 6px rgba(0,0,0,0.2); }
         input[type=range]::-webkit-slider-runnable-track { width: 100%; height: 4px; background: var(--border); border-radius: 2px; }
@@ -118,7 +126,7 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
-        import { getFirestore, collection, addDoc, doc, updateDoc, getDocs, getDoc, setDoc, query, where, orderBy, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
+        import { getFirestore, collection, addDoc, deleteDoc, doc, updateDoc, getDocs, getDoc, setDoc, query, where, orderBy, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
         import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js";
         
    // Your web app's Firebase configuration
@@ -137,7 +145,7 @@ const firebaseConfig = {
         window.db = getFirestore(firebaseApp);
         window.auth = getAuth(firebaseApp);
         window.provider = new GoogleAuthProvider();
-        window.ops = { collection, addDoc, doc, updateDoc, getDocs, getDoc, setDoc, query, where, orderBy, onSnapshot, serverTimestamp, signInWithPopup, signOut, onAuthStateChanged };
+        window.ops = { collection, addDoc, deleteDoc, doc, updateDoc, getDocs, getDoc, setDoc, query, where, orderBy, onSnapshot, serverTimestamp, signInWithPopup, signOut, onAuthStateChanged };
     </script>
 
     <script type="text/babel">
@@ -145,7 +153,7 @@ const firebaseConfig = {
 
         // --- SUB-COMPONENTS ---
 
-        const LedgerView = ({ bets, user, onOpenModal, stats }) => {
+        const LedgerView = ({ bets, user, onOpenModal, onSelectBet, stats }) => {
             const getBetContext = (bet) => {
                 const iWon = bet.winnerEmail === user.email;
                 if (iWon) {
@@ -176,12 +184,15 @@ const firebaseConfig = {
                     </div>
                     <div className="feed-list">
                         {bets.map(bet => (
-                            <div key={bet.id} className="bet-row">
+                            <div key={bet.id} className="bet-row" onClick={() => onSelectBet(bet)}>
                                 <div className="bet-icon">
                                     {bet.img ? <img src={bet.img} onError={(e)=>{e.target.style.display='none'}} /> : <i data-lucide="trophy" color="var(--primary)"></i>}
                                 </div>
                                 <div className="bet-info">
-                                    <div style={{fontWeight:600}}>{bet.type}</div>
+                                    <div style={{fontWeight:600, display:'flex', alignItems:'center'}}>
+                                        {bet.type}
+                                        {!bet.verified && <span className="status-badge status-pending">Pending</span>}
+                                    </div>
                                     <div style={{fontSize:13, color:'var(--text-sub)'}}>
                                         {bet.winnerEmail === user.email ? 'You won' : 'You lost'} <strong>{getBetContext(bet)}</strong>
                                     </div>
@@ -252,8 +263,8 @@ const firebaseConfig = {
             </div>
         );
 
-        const FriendView = ({ friend, bets, user, getStats }) => {
-            if (!friend) return <div className="content">Loading...</div>;
+        const FriendView = ({ friend, bets, user, getStats, onSelectBet }) => {
+            if (!friend) return null;
             const friendBets = bets.filter(b => b.participants && b.participants.includes(friend.email));
             const friendBalance = getStats(friendBets);
             
@@ -276,12 +287,15 @@ const firebaseConfig = {
                     <div className="feed-list">
                         {friendBets.length === 0 && <div style={{padding:20, color:'#999', textAlign:'center'}}>No bets recorded yet.</div>}
                         {friendBets.map(bet => (
-                            <div key={bet.id} className="bet-row">
+                            <div key={bet.id} className="bet-row" onClick={() => onSelectBet(bet)}>
                                 <div className="bet-icon">
                                     {bet.img ? <img src={bet.img} onError={(e)=>{e.target.style.display='none'}} /> : <i data-lucide="trophy" color="var(--primary)"></i>}
                                 </div>
                                 <div className="bet-info">
-                                    <div style={{fontWeight:600}}>{bet.type}</div>
+                                    <div style={{fontWeight:600, display:'flex', alignItems:'center'}}>
+                                        {bet.type}
+                                        {!bet.verified && <span className="status-badge status-pending">Pending</span>}
+                                    </div>
                                     <div style={{fontSize:13, color:'var(--text-sub)'}}>
                                         {bet.winnerEmail === user.email ? 'You won' : `${friend.name} won`}
                                     </div>
@@ -292,6 +306,55 @@ const firebaseConfig = {
                                 </div>
                             </div>
                         ))}
+                    </div>
+                </div>
+            );
+        };
+
+        const AttestModal = ({ bet, user, onClose, onAttest, onDelete }) => {
+            if (!bet) return null;
+            const isCreator = bet.createdBy === user.uid;
+            const iWon = bet.winnerEmail === user.email;
+            
+            return (
+                <div className="modal-overlay">
+                    <div className="modal-content" style={{maxWidth:350, textAlign:'center'}}>
+                        <h3 style={{fontFamily:'Times New Roman', fontSize:22, marginBottom:8}}>Wager Details</h3>
+                        <div style={{fontSize:14, color:'var(--text-sub)', marginBottom:20}}>
+                            {new Date(bet.createdAt?.seconds * 1000).toLocaleDateString()}
+                        </div>
+
+                        <div style={{background:'var(--bg-body)', padding:16, borderRadius:12, marginBottom:24}}>
+                            <div style={{fontSize:18, fontWeight:'bold', marginBottom:4}}>{bet.type}</div>
+                            <div style={{color:'var(--text-sub)', fontSize:14, marginBottom:16}}>
+                                {bet.course} {bet.hole ? `• Hole ${bet.hole}` : ''}
+                            </div>
+                            <div style={{display:'flex', justifyContent:'center', alignItems:'center', gap:10}}>
+                                <div style={{fontWeight:'bold', fontSize:20, color: iWon ? 'var(--primary)' : '#DC2626'}}>
+                                    {iWon ? 'You Won' : 'You Lost'}
+                                </div>
+                                <div style={{fontWeight:'bold', fontSize:24}}>${bet.amount}</div>
+                            </div>
+                        </div>
+
+                        {/* ATTESTATION LOGIC */}
+                        {!bet.verified && !isCreator && (
+                            <button className="btn-full btn-primary" style={{marginBottom:12}} onClick={() => onAttest(bet.id)}>
+                                Attest (Verify) <i data-lucide="check" size="16" style={{marginLeft:6}} />
+                            </button>
+                        )}
+
+                        {/* DELETE LOGIC */}
+                        {isCreator && (
+                            <button className="btn-full btn-danger" onClick={() => onDelete(bet.id)}>
+                                Delete Wager <i data-lucide="trash-2" size="16" style={{marginLeft:6}} />
+                            </button>
+                        )}
+
+                        {bet.verified && <div style={{color:'var(--primary)', fontWeight:'bold', marginBottom:12}}>✓ Verified Wager</div>}
+                        {!bet.verified && isCreator && <div style={{color:'#D97706', fontSize:12, marginBottom:12}}>Waiting for opponent to verify.</div>}
+
+                        <button className="btn-full btn-secondary" onClick={onClose} style={{marginTop:8}}>Close</button>
                     </div>
                 </div>
             );
@@ -329,7 +392,7 @@ const firebaseConfig = {
                 const winnerName = winnerObj ? (winnerObj.email === user.email ? username : winnerObj.username) : 'Unknown';
                 const participantEmails = participants.map(p => p.email);
                 if(course) localStorage.setItem('lastCourse', course);
-                onSubmit({ type: finalType, img: finalImg, amount: parseInt(amount), winnerEmail: winnerEmail, winnerName: winnerName, participants: participantEmails, hole: hole, course: course });
+                onSubmit({ type: finalType, img: finalImg, amount: parseInt(amount), winnerEmail: winnerEmail, winnerName: winnerName, participants: participantEmails, hole: hole, course: course, verified: false });
             };
 
             return (
@@ -543,8 +606,9 @@ const firebaseConfig = {
             const [activeFriend, setActiveFriend] = useState(null); 
             const [bets, setBets] = useState([]);
             const [modalOpen, setModalOpen] = useState(false);
+            const [selectedBet, setSelectedBet] = useState(null); // For Attest Modal
 
-            useEffect(() => { setTimeout(() => lucide.createIcons(), 50); }, [view, activeFriend, modalOpen]);
+            useEffect(() => { setTimeout(() => lucide.createIcons(), 50); }, [view, activeFriend, modalOpen, selectedBet]);
 
             useEffect(() => {
                 const q = window.ops.query(window.ops.collection(window.db, "bets"), window.ops.where("participants", "array-contains", user.email));
@@ -572,6 +636,23 @@ const firebaseConfig = {
                     await window.ops.addDoc(window.ops.collection(window.db, "bets"), { ...betData, createdBy: user.uid, createdAt: window.ops.serverTimestamp() });
                     setModalOpen(false);
                 } catch (e) { showAppAlert("Error", e.message); }
+            };
+
+            const handleAttest = async (betId) => {
+                try {
+                    const betRef = window.ops.doc(window.db, "bets", betId);
+                    await window.ops.updateDoc(betRef, { verified: true });
+                    setSelectedBet(null);
+                    showAppAlert("Success", "Wager verified!");
+                } catch(e) { showAppAlert("Error", e.message); }
+            };
+
+            const handleDeleteBet = async (betId) => {
+                if(!confirm("Delete this wager?")) return;
+                try {
+                    await window.ops.deleteDoc(window.ops.doc(window.db, "bets", betId));
+                    setSelectedBet(null);
+                } catch(e) { showAppAlert("Error", e.message); }
             };
 
             const switchTab = (tab) => { setActiveFriend(null); setView(tab); };
@@ -602,12 +683,13 @@ const firebaseConfig = {
                         </div>
                     )}
 
-                    {view === 'ledger' && <LedgerView bets={bets} user={user} onOpenModal={() => setModalOpen(true)} stats={stats} />}
+                    {view === 'ledger' && <LedgerView bets={bets} user={user} onOpenModal={() => setModalOpen(true)} onSelectBet={setSelectedBet} stats={stats} />}
                     {view === 'clubhouse' && <ClubhouseView roster={roster} onOpenFriend={openFriend} onAddFriend={onAddFriend} onRemoveFriend={onRemoveFriend} />}
                     {view === 'settings' && <SettingsView user={user} username={username} darkMode={darkMode} setDarkMode={setDarkMode} handleInstall={handleInstall} isStandalone={isStandalone} />}
-                    {view === 'friend' && <FriendView friend={activeFriend} bets={bets} user={user} getStats={getStats} />}
+                    {view === 'friend' && <FriendView friend={activeFriend} bets={bets} user={user} getStats={getStats} onSelectBet={setSelectedBet} />}
 
                     {modalOpen && <BetModal user={user} username={username} roster={roster} onClose={() => setModalOpen(false)} onSubmit={handleAddBet} />}
+                    {selectedBet && <AttestModal bet={selectedBet} user={user} onClose={() => setSelectedBet(null)} onAttest={handleAttest} onDelete={handleDeleteBet} />}
                 </div>
             );
         }
