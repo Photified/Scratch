@@ -32,8 +32,6 @@
         /* HEADER & BRANDING */
         .header { background-color: var(--primary); padding: 0 20px; color: white; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 50; height: 60px; }
         .brand h1 { font-family: var(--font-serif); font-size: 22px; font-weight: 700; letter-spacing: 0.5px; margin: 0; }
-        
-        /* Updated Logo Class for Safety */
         .brand-logo { height: 36px; width: auto; object-fit: contain; max-width: 80vw; }
 
         /* TABS */
@@ -199,18 +197,21 @@
                     <div className="feed-list">
                         {bets.map(bet => (
                             <div key={bet.id} className="bet-row" onClick={() => onSelectBet(bet)}>
-                                <div className="bet-icon">
-                                    {bet.img ? <img src={bet.img} onError={(e)=>{e.target.style.display='none'}} /> : <i data-lucide="trophy" color="var(--primary)"></i>}
+                                <div className="bet-icon" style={bet.type === 'SETTLEMENT' ? {borderColor:'var(--primary)', background:'#ecfdf5'} : {}}>
+                                     {bet.type === 'SETTLEMENT' ? <i data-lucide="banknote" color="var(--primary)"></i> : (bet.img ? <img src={bet.img} onError={(e)=>{e.target.style.display='none'}} /> : <i data-lucide="trophy" color="var(--primary)"></i>)}
                                 </div>
                                 <div className="bet-info">
                                     <div style={{fontWeight:600, display:'flex', alignItems:'center'}}>
-                                        {bet.type}
+                                        {bet.type === 'SETTLEMENT' ? 'Settlement' : bet.type}
                                         {!bet.verified && <span className="status-badge status-pending">Pending</span>}
                                     </div>
                                     <div style={{fontSize:13, color:'var(--text-sub)'}}>
-                                        {bet.winnerEmail === user.email ? 'You won' : 'You lost'} <strong>{getBetContext(bet)}</strong>
+                                        {bet.type === 'SETTLEMENT' 
+                                            ? (bet.winnerEmail === user.email ? 'Balance Cleared' : 'Balance Cleared')
+                                            : (bet.winnerEmail === user.email ? 'You won' : 'You lost') + ' ' + (bet.winnerEmail === user.email ? getBetContext(bet) : '')
+                                        }
                                     </div>
-                                    {(bet.course || bet.hole) && <div style={{fontSize:11, color:'var(--primary)', marginTop:2, fontWeight:500}}>{bet.hole ? `Hole ${bet.hole}` : ''} {bet.hole && bet.course ? '•' : ''} {bet.course}</div>}
+                                    {bet.type !== 'SETTLEMENT' && (bet.course || bet.hole) && <div style={{fontSize:11, color:'var(--primary)', marginTop:2, fontWeight:500}}>{bet.hole ? `Hole ${bet.hole}` : ''} {bet.hole && bet.course ? '•' : ''} {bet.course}</div>}
                                 </div>
                                 <div className={`bet-val ${bet.winnerEmail === user.email ? 'text-green' : 'text-red'}`}>
                                     {bet.winnerEmail === user.email ? '+' : '-'}${bet.amount}
@@ -277,10 +278,11 @@
             </div>
         );
 
-        const FriendView = ({ friend, bets, user, getStats, onSelectBet }) => {
+        const FriendView = ({ friend, bets, user, getStats, onSelectBet, onSettle }) => {
             if (!friend) return null;
             const friendBets = bets.filter(b => b.participants && b.participants.includes(friend.email));
             const friendBalance = getStats(friendBets);
+            const isBalanced = friendBalance === 0;
             
             return (
                 <div className="content">
@@ -291,9 +293,20 @@
                             <div style={{fontSize:14, color:'var(--text-sub)', fontWeight:'bold'}}>@{friend.username}</div>
                         </div>
                         <div style={{fontSize:11, fontWeight:800, color:'var(--text-sub)', textTransform:'uppercase'}}>Net vs You</div>
-                        <div className={`hero-amount ${friendBalance >= 0 ? 'text-green' : 'text-red'}`}>
+                        <div className={`hero-amount ${friendBalance >= 0 ? 'text-green' : 'text-red'}`} style={{fontSize:32, fontWeight:700, fontFamily:'var(--font-serif)'}}>
                             {friendBalance >= 0 ? '+' : '-'}${Math.abs(friendBalance)}
                         </div>
+
+                        {/* SETTLE BUTTON - Only show if balance is not 0 */}
+                        {!isBalanced && (
+                            <button 
+                                onClick={() => onSettle(friend, friendBalance)}
+                                className="btn-primary" 
+                                style={{marginTop:16, padding:'10px 24px', borderRadius:20, border:'none', fontSize:14, fontWeight:700, display:'inline-flex', alignItems:'center', gap:8}}
+                            >
+                                <i data-lucide="banknote" size="16"></i> Settle Up ${Math.abs(friendBalance)}
+                            </button>
+                        )}
                     </div>
                     <div style={{padding:'24px 20px 10px', fontWeight:700, display:'flex', alignItems:'center', gap:8}}>
                         <i data-lucide="history" size="18"></i> History vs {friend.name}
@@ -302,18 +315,20 @@
                         {friendBets.length === 0 && <div style={{padding:20, color:'#999', textAlign:'center'}}>No bets recorded yet.</div>}
                         {friendBets.map(bet => (
                             <div key={bet.id} className="bet-row" onClick={() => onSelectBet(bet)}>
-                                <div className="bet-icon">
-                                    {bet.img ? <img src={bet.img} onError={(e)=>{e.target.style.display='none'}} /> : <i data-lucide="trophy" color="var(--primary)"></i>}
+                                <div className="bet-icon" style={bet.type === 'SETTLEMENT' ? {borderColor:'var(--primary)', background:'#ecfdf5'} : {}}>
+                                    {bet.type === 'SETTLEMENT' ? <i data-lucide="banknote" color="var(--primary)"></i> : (bet.img ? <img src={bet.img} onError={(e)=>{e.target.style.display='none'}} /> : <i data-lucide="trophy" color="var(--primary)"></i>)}
                                 </div>
                                 <div className="bet-info">
                                     <div style={{fontWeight:600, display:'flex', alignItems:'center'}}>
-                                        {bet.type}
+                                        {bet.type === 'SETTLEMENT' ? 'Settlement' : bet.type}
                                         {!bet.verified && <span className="status-badge status-pending">Pending</span>}
                                     </div>
                                     <div style={{fontSize:13, color:'var(--text-sub)'}}>
-                                        {bet.winnerEmail === user.email ? 'You won' : `${friend.name} won`}
+                                        {bet.type === 'SETTLEMENT' 
+                                            ? (bet.winnerEmail === user.email ? 'Paid by You' : 'Paid to You')
+                                            : (bet.winnerEmail === user.email ? 'You won' : `${friend.name} won`)}
                                     </div>
-                                    {(bet.course || bet.hole) && <div style={{fontSize:11, color:'var(--primary)', marginTop:2, fontWeight:500}}>{bet.hole ? `Hole ${bet.hole}` : ''} {bet.hole && bet.course ? '•' : ''} {bet.course}</div>}
+                                    {bet.type !== 'SETTLEMENT' && (bet.course || bet.hole) && <div style={{fontSize:11, color:'var(--primary)', marginTop:2, fontWeight:500}}>{bet.hole ? `Hole ${bet.hole}` : ''} {bet.hole && bet.course ? '•' : ''} {bet.course}</div>}
                                 </div>
                                 <div className={`bet-val ${bet.winnerEmail === user.email ? 'text-green' : 'text-red'}`}>
                                     {bet.winnerEmail === user.email ? '+' : '-'}${bet.amount}
@@ -329,23 +344,44 @@
             if (!bet) return null;
             const isCreator = bet.createdBy === user.uid;
             const iWon = bet.winnerEmail === user.email;
+            const isSettlement = bet.type === 'SETTLEMENT';
             
+            // Logic for display text
+            let titleText = "";
+            let color = "";
+            
+            if (isSettlement) {
+                // If I 'won' a settlement, it means I was the one in debt and I paid up (balancing the ledger)
+                // OR I am receiving a payment.
+                titleText = "Settlement Transaction";
+                color = 'var(--text-main)';
+            } else {
+                titleText = iWon ? 'You Won' : 'You Lost';
+                color = iWon ? 'var(--primary)' : '#DC2626';
+            }
+
             return (
                 <div className="modal-overlay">
                     <div className="modal-content" style={{maxWidth:350, textAlign:'center'}}>
-                        <h3 style={{fontFamily:'Times New Roman', fontSize:22, marginBottom:8}}>Wager Details</h3>
+                        <h3 style={{fontFamily:'Times New Roman', fontSize:22, marginBottom:8}}>
+                            {isSettlement ? 'Ledger Settlement' : 'Wager Details'}
+                        </h3>
                         <div style={{fontSize:14, color:'var(--text-sub)', marginBottom:20}}>
                             {new Date(bet.createdAt?.seconds * 1000).toLocaleDateString()}
                         </div>
 
                         <div style={{background:'var(--bg-body)', padding:16, borderRadius:12, marginBottom:24}}>
-                            <div style={{fontSize:18, fontWeight:'bold', marginBottom:4}}>{bet.type}</div>
-                            <div style={{color:'var(--text-sub)', fontSize:14, marginBottom:16}}>
-                                {bet.course} {bet.hole ? `• Hole ${bet.hole}` : ''}
+                            <div style={{fontSize:18, fontWeight:'bold', marginBottom:4}}>
+                                {isSettlement ? 'Balance Cleared' : bet.type}
                             </div>
+                            {!isSettlement && (
+                                <div style={{color:'var(--text-sub)', fontSize:14, marginBottom:16}}>
+                                    {bet.course} {bet.hole ? `• Hole ${bet.hole}` : ''}
+                                </div>
+                            )}
                             <div style={{display:'flex', justifyContent:'center', alignItems:'center', gap:10}}>
-                                <div style={{fontWeight:'bold', fontSize:20, color: iWon ? 'var(--primary)' : '#DC2626'}}>
-                                    {iWon ? 'You Won' : 'You Lost'}
+                                <div style={{fontWeight:'bold', fontSize:20, color: color}}>
+                                    {titleText}
                                 </div>
                                 <div style={{fontWeight:'bold', fontSize:24}}>${bet.amount}</div>
                             </div>
@@ -354,18 +390,18 @@
                         {/* ATTESTATION LOGIC */}
                         {!bet.verified && !isCreator && (
                             <button className="btn-full btn-primary" style={{marginBottom:12}} onClick={() => onAttest(bet.id)}>
-                                Attest (Verify) <i data-lucide="check" size="16" style={{marginLeft:6}} />
+                                {isSettlement ? 'Confirm Payment Received' : 'Attest (Verify)'} <i data-lucide="check" size="16" style={{marginLeft:6}} />
                             </button>
                         )}
 
                         {/* DELETE LOGIC - ONLY IF NOT VERIFIED */}
                         {isCreator && !bet.verified && (
                             <button className="btn-full btn-danger" onClick={() => onDeleteRequest(bet.id)}>
-                                Delete Wager <i data-lucide="trash-2" size="16" style={{marginLeft:6}} />
+                                Delete Request <i data-lucide="trash-2" size="16" style={{marginLeft:6}} />
                             </button>
                         )}
 
-                        {bet.verified && <div style={{color:'var(--primary)', fontWeight:'bold', marginBottom:12}}>✓ Verified Wager</div>}
+                        {bet.verified && <div style={{color:'var(--primary)', fontWeight:'bold', marginBottom:12}}>✓ Verified</div>}
                         {!bet.verified && isCreator && <div style={{color:'#D97706', fontSize:12, marginBottom:12}}>Waiting for opponent to verify.</div>}
 
                         <button className="btn-full btn-secondary" onClick={onClose} style={{marginTop:8}}>Close</button>
@@ -674,6 +710,39 @@
                     setConfirmDeleteId(null);
                 } catch(e) { showAppAlert("Error", e.message); }
             };
+            
+            const handleSettle = async (friend, currentBalance) => {
+                if(currentBalance === 0) return;
+                
+                // MATH: 
+                // If I am UP $50 (balance = +50), Friend pays me. 
+                // To zero the ledger, we need a record where Friend 'wins' $50.
+                // If I am DOWN $50 (balance = -50), I pay Friend.
+                // To zero the ledger, we need a record where I 'win' $50.
+                
+                const amount = Math.abs(currentBalance);
+                const winnerEmail = currentBalance > 0 ? friend.email : user.email;
+                const winnerName = currentBalance > 0 ? friend.name : 'Me';
+                
+                if(!confirm(`Propose a settlement of $${amount} to clear the ledger? This will require verification.`)) return;
+
+                const settlementBet = {
+                    type: 'SETTLEMENT',
+                    img: null,
+                    amount: amount,
+                    winnerEmail: winnerEmail, // The person in debt 'wins' this record to balance books
+                    winnerName: winnerName,
+                    participants: [user.email, friend.email],
+                    hole: null,
+                    course: null,
+                    verified: false
+                };
+
+                try {
+                    await window.ops.addDoc(window.ops.collection(window.db, "bets"), { ...settlementBet, createdBy: user.uid, createdAt: window.ops.serverTimestamp() });
+                    showAppAlert("Proposed", "Settlement proposed. Ask " + friend.name + " to verify it on their phone.");
+                } catch (e) { showAppAlert("Error", e.message); }
+            };
 
             const switchTab = (tab) => { setActiveFriend(null); setView(tab); };
             const openFriend = (friend) => { setActiveFriend(friend); setView('friend'); };
@@ -710,7 +779,8 @@
                     {view === 'ledger' && <LedgerView bets={bets} user={user} onOpenModal={() => setModalOpen(true)} onSelectBet={setSelectedBet} stats={stats} />}
                     {view === 'clubhouse' && <ClubhouseView roster={roster} onOpenFriend={openFriend} onAddFriend={onAddFriend} onRemoveFriend={onRemoveFriend} />}
                     {view === 'settings' && <SettingsView user={user} username={username} darkMode={darkMode} setDarkMode={setDarkMode} handleInstall={handleInstall} isStandalone={isStandalone} />}
-                    {view === 'friend' && <FriendView friend={activeFriend} bets={bets} user={user} getStats={getStats} onSelectBet={setSelectedBet} />}
+                    
+                    {view === 'friend' && <FriendView friend={activeFriend} bets={bets} user={user} getStats={getStats} onSelectBet={setSelectedBet} onSettle={handleSettle} />}
 
                     {modalOpen && <BetModal user={user} username={username} roster={roster} onClose={() => setModalOpen(false)} onSubmit={handleAddBet} />}
                     
