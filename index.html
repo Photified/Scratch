@@ -12,104 +12,105 @@
 
     <style>
         :root {
-            --masters-green: #00594C; /* Deep Emerald */
-            --masters-yellow: #E8D55A; /* Logo Yellow */
-            --bg-white: #FFFFFF;
-            --bg-off-white: #F9FAFB;
+            --primary: #00594C; /* Masters Green */
+            --accent: #E8D55A;  /* Yellow */
+            --bg-body: #F9FAFB;
+            --bg-card: #FFFFFF;
             --text-main: #111827;
-            --text-muted: #6B7280;
+            --text-sub: #6B7280;
+            --border: #E5E7EB;
             --font-serif: "Times New Roman", Times, serif; 
             --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
         }
 
+        /* DARK MODE OVERRIDES */
+        body.dark-mode {
+            --primary: #059669; /* Brighter green for dark mode */
+            --bg-body: #111827;
+            --bg-card: #1F2937;
+            --text-main: #F9FAFB;
+            --text-sub: #9CA3AF;
+            --border: #374151;
+        }
+
         * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
-        body { background-color: var(--bg-off-white); color: var(--text-main); font-family: var(--font-sans); }
+        body { background-color: var(--bg-body); color: var(--text-main); font-family: var(--font-sans); transition: background 0.3s, color 0.3s; }
         
-        /* APP CONTAINER */
-        .app-container { max-width: 500px; margin: 0 auto; min-height: 100vh; background: var(--bg-white); box-shadow: 0 0 20px rgba(0,0,0,0.05); display: flex; flex-direction: column; }
+        .app-container { max-width: 500px; margin: 0 auto; min-height: 100vh; background: var(--bg-card); box-shadow: 0 0 20px rgba(0,0,0,0.05); display: flex; flex-direction: column; }
         
         /* HEADER */
-        .header { background-color: var(--masters-green); padding: 16px 20px; color: white; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 10; }
-        .brand { display: flex; flex-direction: column; }
+        .header { background-color: var(--primary); padding: 16px 20px; color: white; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 10; }
         .brand h1 { font-family: var(--font-serif); font-size: 22px; font-weight: 700; letter-spacing: 0.5px; }
-        .brand small { font-size: 10px; text-transform: uppercase; letter-spacing: 2px; opacity: 0.8; margin-top: 2px; }
-        .profile-btn { width: 36px; height: 36px; border-radius: 50%; border: 2px solid var(--masters-yellow); overflow: hidden; cursor: pointer; }
-        .profile-btn img { width: 100%; height: 100%; object-fit: cover; }
+        .header-actions { display: flex; gap: 16px; align-items: center; }
+        .icon-btn { cursor: pointer; opacity: 0.9; }
 
-        /* TABS (Navigation) */
-        .nav-tabs { display: flex; border-bottom: 1px solid #e5e7eb; background: white; }
-        .nav-item { flex: 1; text-align: center; padding: 16px; color: var(--text-muted); font-weight: 600; cursor: pointer; font-size: 14px; position: relative; }
-        .nav-item.active { color: var(--masters-green); }
-        .nav-item.active::after { content: ''; position: absolute; bottom: 0; left: 0; right: 0; height: 3px; background: var(--masters-green); border-radius: 3px 3px 0 0; }
+        /* TABS */
+        .nav-tabs { display: flex; border-bottom: 1px solid var(--border); background: var(--bg-card); }
+        .nav-item { flex: 1; text-align: center; padding: 16px; color: var(--text-sub); font-weight: 600; cursor: pointer; font-size: 14px; position: relative; }
+        .nav-item.active { color: var(--primary); }
+        .nav-item.active::after { content: ''; position: absolute; bottom: 0; left: 0; right: 0; height: 3px; background: var(--primary); border-radius: 3px 3px 0 0; }
 
-        /* CONTENT AREAS */
-        .content { flex: 1; padding-bottom: 80px; } /* Space for FAB */
-
-        /* BALANCE CARD (Home) */
-        .hero-card { padding: 32px 20px; text-align: center; background: white; border-bottom: 1px solid #f3f4f6; }
-        .hero-label { font-size: 12px; text-transform: uppercase; color: var(--text-muted); letter-spacing: 1px; font-weight: 700; margin-bottom: 8px; }
+        /* HERO CARD */
+        .hero-card { padding: 32px 20px; text-align: center; background: var(--bg-card); border-bottom: 1px solid var(--border); }
+        .hero-label { font-size: 12px; text-transform: uppercase; color: var(--text-sub); letter-spacing: 1px; font-weight: 700; margin-bottom: 8px; }
         .hero-amount { font-family: var(--font-serif); font-size: 56px; font-weight: 700; line-height: 1; }
-        .text-green { color: var(--masters-green); }
-        .text-red { color: #B91C1C; }
+        .text-green { color: #059669; }
+        .text-red { color: #DC2626; }
 
-        /* ACTIVITY FEED */
+        /* FEED & LISTS */
+        .content { flex: 1; padding-bottom: 80px; }
         .section-title { padding: 24px 20px 10px; font-family: var(--font-serif); font-size: 18px; font-weight: 700; color: var(--text-main); display: flex; align-items: center; gap: 8px; }
         .feed-list { padding: 0 16px; }
-        .bet-row { display: flex; align-items: center; padding: 16px 0; border-bottom: 1px solid #f3f4f6; }
-        .bet-icon { width: 42px; height: 42px; background: #f0fdf4; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-right: 16px; color: var(--masters-green); border: 1px solid #dcfce7; }
+        .bet-row { display: flex; align-items: center; padding: 16px 0; border-bottom: 1px solid var(--border); }
+        .bet-icon { width: 42px; height: 42px; background: var(--bg-body); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-right: 16px; color: var(--primary); border: 1px solid var(--border); }
         .bet-info { flex: 1; }
-        .bet-type { font-weight: 600; font-size: 16px; margin-bottom: 4px; }
-        .bet-meta { font-size: 13px; color: var(--text-muted); }
+        .bet-type { font-weight: 600; font-size: 16px; margin-bottom: 4px; color: var(--text-main); }
+        .bet-meta { font-size: 13px; color: var(--text-sub); }
         .bet-val { font-family: var(--font-serif); font-size: 18px; font-weight: 700; }
 
-        /* PROFILE VIEW */
-        .profile-view { padding: 24px; text-align: center; }
-        .profile-lg { width: 100px; height: 100px; border-radius: 50%; margin: 0 auto 16px; border: 4px solid var(--masters-green); box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); }
-        .profile-name { font-family: var(--font-serif); font-size: 28px; font-weight: 700; margin-bottom: 4px; }
-        .profile-email { color: var(--text-muted); margin-bottom: 32px; font-size: 14px; }
+        /* SETTINGS & PROFILE */
+        .settings-view { padding: 24px; }
+        .settings-card { background: var(--bg-body); border-radius: 12px; border: 1px solid var(--border); overflow: hidden; margin-bottom: 24px; }
+        .settings-row { padding: 16px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); }
+        .settings-row:last-child { border-bottom: none; }
+        .settings-label { font-weight: 600; color: var(--text-main); }
         
-        .stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 32px; }
-        .stat-card { background: #f9fafb; padding: 16px; border-radius: 12px; border: 1px solid #e5e7eb; }
-        .stat-val { font-family: var(--font-serif); font-size: 24px; font-weight: 700; color: var(--masters-green); }
-        .stat-label { font-size: 12px; color: var(--text-muted); text-transform: uppercase; margin-top: 4px; font-weight: 600; }
+        .profile-lg { width: 80px; height: 80px; border-radius: 50%; border: 3px solid var(--primary); margin-bottom: 16px; }
+        .profile-header { text-align: center; margin-bottom: 32px; }
 
-        .logout-btn { background: white; border: 1px solid #e5e7eb; color: #B91C1C; padding: 14px; width: 100%; border-radius: 12px; font-weight: 600; font-size: 16px; cursor: pointer; }
-
-        /* FAB (Add Button) */
-        .fab { position: fixed; bottom: 30px; right: 24px; width: 64px; height: 64px; border-radius: 50%; background: var(--masters-green); color: white; border: none; box-shadow: 0 10px 25px -5px rgba(0, 89, 76, 0.4); display: flex; align-items: center; justify-content: center; cursor: pointer; transition: transform 0.1s; z-index: 50; }
+        /* BUTTONS */
+        .fab { position: fixed; bottom: 30px; right: 24px; width: 64px; height: 64px; border-radius: 50%; background: var(--primary); color: white; border: none; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.3); display: flex; align-items: center; justify-content: center; cursor: pointer; transition: transform 0.1s; z-index: 50; }
         .fab:active { transform: scale(0.95); }
+        
+        .btn-full { width: 100%; padding: 14px; border-radius: 12px; font-weight: 600; font-size: 16px; cursor: pointer; text-align: center; border: none; margin-bottom: 12px; }
+        .btn-primary { background: var(--primary); color: white; }
+        .btn-outline { background: transparent; border: 1px solid var(--border); color: var(--text-sub); }
 
-        /* LOGIN SCREEN */
-        .login-screen { height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; background-color: var(--masters-green); color: white; padding: 32px; text-align: center; }
-        .login-btn { background: white; color: var(--masters-green); border: none; padding: 16px 32px; border-radius: 50px; font-weight: bold; font-size: 16px; margin-top: 40px; cursor: pointer; box-shadow: 0 10px 25px rgba(0,0,0,0.2); }
+        /* LOGIN & ERROR */
+        .login-screen { height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; background-color: var(--primary); color: white; padding: 32px; text-align: center; }
+        .error-box { margin-top: 20px; padding: 12px; background: rgba(0,0,0,0.2); border-radius: 8px; font-size: 12px; max-width: 300px; }
 
         /* MODAL */
-        .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); backdrop-filter: blur(4px); display: flex; align-items: flex-end; z-index: 100; animation: fadeIn 0.2s; }
-        .modal-content { background: white; width: 100%; border-radius: 24px 24px 0 0; padding: 24px; max-height: 90vh; overflow-y: auto; animation: slideUp 0.3s; box-shadow: 0 -10px 40px rgba(0,0,0,0.1); }
+        .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); backdrop-filter: blur(4px); display: flex; align-items: flex-end; z-index: 100; }
+        .modal-content { background: var(--bg-card); width: 100%; border-radius: 24px 24px 0 0; padding: 24px; max-height: 90vh; overflow-y: auto; box-shadow: 0 -10px 40px rgba(0,0,0,0.1); }
+        .control-label { display: block; font-size: 11px; font-weight: 800; color: var(--text-sub); margin-bottom: 12px; letter-spacing: 1px; text-transform: uppercase; }
         
-        /* FORM CONTROLS */
-        .control-label { display: block; font-size: 11px; font-weight: 800; color: #9ca3af; margin-bottom: 12px; letter-spacing: 1px; text-transform: uppercase; }
-        
-        .winner-toggle { display: flex; background: #f3f4f6; padding: 4px; border-radius: 12px; margin-bottom: 24px; }
-        .toggle-opt { flex: 1; padding: 12px; text-align: center; font-weight: 600; font-size: 14px; border-radius: 8px; cursor: pointer; color: var(--text-muted); border: 2px solid transparent; }
-        .toggle-opt.selected-green { background: white; color: var(--masters-green); box-shadow: 0 2px 8px rgba(0,0,0,0.05); border-color: #d1fae5; }
-        .toggle-opt.selected-red { background: white; color: #B91C1C; box-shadow: 0 2px 8px rgba(0,0,0,0.05); border-color: #fee2e2; }
-
+        /* CHIPS & TOGGLES */
+        .chip { padding: 14px 0; border: 1px solid var(--border); background: var(--bg-card); border-radius: 12px; text-align: center; font-weight: 700; color: var(--text-main); cursor: pointer; min-width: 60px; font-family: var(--font-serif); font-size: 18px; }
+        .chip.active { background: var(--primary); color: white; border-color: var(--primary); }
         .chip-grid { display: flex; gap: 10px; margin-bottom: 24px; overflow-x: auto; padding-bottom: 4px; }
-        .chip { flex: 1; padding: 14px 0; border: 1px solid #e5e7eb; background: white; border-radius: 12px; text-align: center; font-weight: 700; color: var(--text-main); cursor: pointer; min-width: 60px; font-family: var(--font-serif); font-size: 18px; }
-        .chip.active { background: var(--masters-green); color: white; border-color: var(--masters-green); }
-
+        
+        .type-card { border: 1px solid var(--border); padding: 16px; border-radius: 12px; text-align: center; cursor: pointer; background: var(--bg-card); }
+        .type-card.active { border-color: var(--primary); background: rgba(0, 89, 76, 0.05); box-shadow: 0 0 0 2px var(--primary); }
         .type-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 32px; }
-        .type-card { border: 1px solid #e5e7eb; padding: 16px; border-radius: 12px; text-align: center; cursor: pointer; background: white; transition: all 0.2s; }
-        .type-card.active { border-color: var(--masters-green); background: #f0fdf4; box-shadow: 0 0 0 2px var(--masters-green); }
-        .type-card strong { display: block; font-size: 15px; margin-bottom: 4px; color: var(--text-main); }
-        .type-card small { font-size: 11px; color: var(--text-muted); }
+        .type-card strong { display: block; color: var(--text-main); margin-bottom: 4px; }
+        .type-card small { color: var(--text-sub); font-size: 11px; }
 
-        .primary-btn { width: 100%; background: var(--masters-green); color: white; padding: 18px; border-radius: 16px; border: none; font-size: 16px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; }
-        .primary-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+        .winner-toggle { display: flex; background: var(--bg-body); padding: 4px; border-radius: 12px; margin-bottom: 24px; border: 1px solid var(--border); }
+        .toggle-opt { flex: 1; padding: 12px; text-align: center; font-weight: 600; font-size: 14px; border-radius: 8px; cursor: pointer; color: var(--text-sub); }
+        .toggle-opt.selected-green { background: var(--bg-card); color: var(--primary); box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
+        .toggle-opt.selected-red { background: var(--bg-card); color: #DC2626; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
 
-        @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
     </style>
 </head>
 <body>
@@ -120,7 +121,7 @@
         import { getFirestore, collection, addDoc, query, orderBy, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
         import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js";
         
-       // Your web app's Firebase configuration
+ // Your web app's Firebase configuration
 const firebaseConfig = {
   apiKey: "AIzaSyBPBps7eOq5gqyT5LuOnUGJkhPumBbZh-w",
   authDomain: "scratch-d0420.firebaseapp.com",
@@ -133,15 +134,20 @@ const firebaseConfig = {
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
 
-        const app = initializeApp(firebaseConfig);
-        const db = getFirestore(app);
-        const auth = getAuth(app);
-        const provider = new GoogleAuthProvider();
+        try {
+            const app = initializeApp(firebaseConfig);
+            const db = getFirestore(app);
+            const auth = getAuth(app);
+            const provider = new GoogleAuthProvider();
 
-        window.db = db;
-        window.auth = auth;
-        window.provider = provider;
-        window.ops = { collection, addDoc, query, orderBy, onSnapshot, serverTimestamp, signInWithPopup, signOut, onAuthStateChanged };
+            window.db = db;
+            window.auth = auth;
+            window.provider = provider;
+            window.ops = { collection, addDoc, query, orderBy, onSnapshot, serverTimestamp, signInWithPopup, signOut, onAuthStateChanged };
+        } catch (e) {
+            console.error("Firebase Init Error:", e);
+            window.initError = e.message;
+        }
     </script>
 
     <script type="text/babel">
@@ -150,27 +156,78 @@ const app = initializeApp(firebaseConfig);
         function App() {
             const [user, setUser] = useState(null);
             const [loading, setLoading] = useState(true);
+            const [errorMsg, setErrorMsg] = useState("");
+            const [deferredPrompt, setDeferredPrompt] = useState(null);
+            const [darkMode, setDarkMode] = useState(localStorage.getItem('theme') === 'dark');
 
+            // 1. Handle Dark Mode
             useEffect(() => {
-                if (!window.ops) return;
+                if (darkMode) {
+                    document.body.classList.add('dark-mode');
+                    localStorage.setItem('theme', 'dark');
+                } else {
+                    document.body.classList.remove('dark-mode');
+                    localStorage.setItem('theme', 'light');
+                }
+            }, [darkMode]);
+
+            // 2. Handle Install Prompt
+            useEffect(() => {
+                window.addEventListener('beforeinstallprompt', (e) => {
+                    e.preventDefault();
+                    setDeferredPrompt(e);
+                });
+            }, []);
+
+            // 3. Handle Auth & Loading Timeout
+            useEffect(() => {
+                if (window.initError) {
+                    setErrorMsg("Config Error: " + window.initError);
+                    setLoading(false);
+                    return;
+                }
+                if (!window.ops) {
+                    setErrorMsg("Firebase libraries failed to load.");
+                    setLoading(false);
+                    return;
+                }
+                
+                // Timeout Warning
+                const timer = setTimeout(() => {
+                    if (loading) setErrorMsg("Stuck loading? Check 'Authorized Domains' in Firebase Console.");
+                }, 4000);
+
                 const unsubscribe = window.ops.onAuthStateChanged(window.auth, (u) => {
                     setUser(u);
-                    setLoading(false); // Stop loading once Auth decides (User or Null)
+                    setLoading(false);
+                    clearTimeout(timer);
                 });
-                return unsubscribe;
+                return () => { unsubscribe(); clearTimeout(timer); };
             }, []);
 
             const handleLogin = async () => {
                 try {
                     await window.ops.signInWithPopup(window.auth, window.provider);
                 } catch (e) {
-                    alert("Login failed: " + e.message);
+                    alert("Login Error: " + e.message);
+                }
+            };
+
+            const handleInstall = () => {
+                if (deferredPrompt) {
+                    deferredPrompt.prompt();
+                    deferredPrompt.userChoice.then((result) => {
+                        if (result.outcome === 'accepted') setDeferredPrompt(null);
+                    });
+                } else {
+                    alert("Install not available. Use your browser menu -> Add to Home Screen.");
                 }
             };
 
             if (loading) return (
                 <div className="login-screen">
                     <div>Loading...</div>
+                    {errorMsg && <div className="error-box">{errorMsg}</div>}
                 </div>
             );
 
@@ -181,49 +238,40 @@ const app = initializeApp(firebaseConfig);
                             <h1 style={{fontFamily: 'Times New Roman', fontSize: 48, marginBottom: 8}}>Scratch</h1>
                             <p style={{opacity: 0.8, letterSpacing: 2, textTransform: 'uppercase', fontSize: 12}}>The Gentlemen's Ledger</p>
                         </div>
-                        <button className="login-btn" onClick={handleLogin}>
+                        <button className="btn-full" style={{background:'white', color:'var(--primary)'}} onClick={handleLogin}>
                             Sign in with Google
                         </button>
+                        {errorMsg && <div className="error-box" style={{color:'white'}}>{errorMsg}</div>}
                     </div>
                 );
             }
 
-            return <MainApp user={user} />;
+            return <MainApp user={user} darkMode={darkMode} setDarkMode={setDarkMode} installApp={handleInstall} promptAvailable={!!deferredPrompt} />;
         }
 
-        function MainApp({ user }) {
-            const [view, setView] = useState('ledger'); // 'ledger' or 'profile'
+        function MainApp({ user, darkMode, setDarkMode, installApp, promptAvailable }) {
+            const [view, setView] = useState('ledger'); 
             const [bets, setBets] = useState([]);
             const [modalOpen, setModalOpen] = useState(false);
 
-            // --- 1. Load Data ---
             useEffect(() => {
                 const q = window.ops.query(
                     window.ops.collection(window.db, "bets"), 
                     window.ops.orderBy("createdAt", "desc")
                 );
-                
                 return window.ops.onSnapshot(q, (snapshot) => {
                     setBets(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
                 });
             }, []);
 
-            // --- 2. Calculate Stats ---
             const stats = useMemo(() => {
                 let balance = 0;
-                let wins = 0;
-                let losses = 0;
-                
                 bets.forEach(b => {
-                    if (b.winner === 'Me') {
-                        balance += b.amount;
-                        wins++;
-                    } else {
-                        balance -= b.amount;
-                        losses++;
-                    }
+                    const am = b.amount || 0;
+                    if (b.winner === 'Me') balance += am;
+                    else balance -= am;
                 });
-                return { balance, wins, losses, total: bets.length };
+                return balance;
             }, [bets]);
 
             const handleAddBet = async (type, amount, winner) => {
@@ -239,37 +287,34 @@ const app = initializeApp(firebaseConfig);
 
             return (
                 <div className="app-container">
-                    {/* Header */}
                     <header className="header">
                         <div className="brand">
                             <h1>Scratch</h1>
-                            <small>Ledger</small>
                         </div>
-                        <div className="profile-btn" onClick={() => setView(view === 'ledger' ? 'profile' : 'ledger')}>
-                            <img src={user.photoURL} alt="User" />
+                        <div className="header-actions">
+                            <div className="icon-btn" onClick={() => setView('settings')}>
+                                <i data-lucide="settings" color="white"></i>
+                            </div>
                         </div>
                     </header>
 
-                    {/* Navigation */}
                     <div className="nav-tabs">
                         <div className={`nav-item ${view === 'ledger' ? 'active' : ''}`} onClick={() => setView('ledger')}>Ledger</div>
-                        <div className={`nav-item ${view === 'profile' ? 'active' : ''}`} onClick={() => setView('profile')}>My Profile</div>
+                        <div className={`nav-item ${view === 'settings' ? 'active' : ''}`} onClick={() => setView('settings')}>Settings</div>
                     </div>
 
-                    {/* VIEW: LEDGER */}
+                    {/* LEDGER VIEW */}
                     {view === 'ledger' && (
                         <div className="content">
                             <div className="hero-card">
                                 <div className="hero-label">Net Balance</div>
-                                <div className={`hero-amount ${stats.balance >= 0 ? 'text-green' : 'text-red'}`}>
-                                    {stats.balance >= 0 ? '+' : '-'}${Math.abs(stats.balance)}
+                                <div className={`hero-amount ${stats >= 0 ? 'text-green' : 'text-red'}`}>
+                                    {stats >= 0 ? '+' : '-'}${Math.abs(stats)}
                                 </div>
                             </div>
-
                             <div className="section-title">
                                 <i data-lucide="history" size="18"></i> Recent Activity
                             </div>
-                            
                             <div className="feed-list">
                                 {bets.map(bet => (
                                     <div key={bet.id} className="bet-row">
@@ -278,9 +323,7 @@ const app = initializeApp(firebaseConfig);
                                         </div>
                                         <div className="bet-info">
                                             <div className="bet-type">{bet.type}</div>
-                                            <div className="bet-meta">
-                                                {bet.winner === 'Me' ? 'You won' : 'Dave won'}
-                                            </div>
+                                            <div className="bet-meta">{bet.winner === 'Me' ? 'You won' : 'Dave won'}</div>
                                         </div>
                                         <div className={`bet-val ${bet.winner === 'Me' ? 'text-green' : 'text-red'}`}>
                                             {bet.winner === 'Me' ? '+' : '-'}${bet.amount}
@@ -288,47 +331,47 @@ const app = initializeApp(firebaseConfig);
                                     </div>
                                 ))}
                             </div>
-
                             <button className="fab" onClick={() => setModalOpen(true)}>
                                 <i data-lucide="plus" size="32"></i>
                             </button>
                         </div>
                     )}
 
-                    {/* VIEW: PROFILE */}
-                    {view === 'profile' && (
-                        <div className="content profile-view">
-                            <img src={user.photoURL} className="profile-lg" />
-                            <h2 className="profile-name">{user.displayName}</h2>
-                            <p className="profile-email">{user.email}</p>
-
-                            <div className="stat-grid">
-                                <div className="stat-card">
-                                    <div className="stat-val text-green">{stats.wins}</div>
-                                    <div className="stat-label">Wins</div>
-                                </div>
-                                <div className="stat-card">
-                                    <div className="stat-val text-red">{stats.losses}</div>
-                                    <div className="stat-label">Losses</div>
-                                </div>
-                            </div>
-                            
-                            <div className="stat-card" style={{marginBottom: 32}}>
-                                <div className="stat-val">{stats.total}</div>
-                                <div className="stat-label">Total Bets Placed</div>
+                    {/* SETTINGS VIEW */}
+                    {view === 'settings' && (
+                        <div className="content settings-view">
+                            <div className="profile-header">
+                                <img src={user.photoURL} className="profile-lg" />
+                                <h2>{user.displayName}</h2>
+                                <p style={{color:'var(--text-sub)', fontSize: 14}}>{user.email}</p>
                             </div>
 
-                            <button className="logout-btn" onClick={() => window.ops.signOut(window.auth)}>
+                            <div className="settings-card">
+                                <div className="settings-row">
+                                    <span className="settings-label">Dark Mode</span>
+                                    <input 
+                                        type="checkbox" 
+                                        checked={darkMode} 
+                                        onChange={() => setDarkMode(!darkMode)}
+                                        style={{transform: 'scale(1.5)'}}
+                                    />
+                                </div>
+                            </div>
+
+                            {promptAvailable && (
+                                <button className="btn-full btn-primary" onClick={installApp}>
+                                    Install App
+                                </button>
+                            )}
+
+                            <button className="btn-full btn-outline" style={{borderColor:'#DC2626', color:'#DC2626'}} onClick={() => window.ops.signOut(window.auth)}>
                                 Sign Out
                             </button>
                         </div>
                     )}
 
                     {modalOpen && (
-                        <BetModal 
-                            onClose={() => setModalOpen(false)} 
-                            onSubmit={handleAddBet} 
-                        />
+                        <BetModal onClose={() => setModalOpen(false)} onSubmit={handleAddBet} />
                     )}
                 </div>
             );
@@ -346,66 +389,41 @@ const app = initializeApp(firebaseConfig);
                 { label: "Skin", sub: "Hole Winner" },
             ];
 
-            // Re-run icons when modal opens
             useEffect(() => { setTimeout(() => lucide.createIcons(), 100) }, []);
 
             return (
                 <div className="modal-overlay">
                     <div className="modal-content">
                         <div style={{display:'flex', justifyContent:'space-between', marginBottom: 20}}>
-                            <h3 style={{fontFamily:'Times New Roman', fontSize:24}}>New Wager</h3>
-                            <div onClick={onClose} style={{cursor:'pointer'}}><i data-lucide="x"></i></div>
+                            <h3 style={{fontFamily:'Times New Roman', fontSize:24, color:'var(--text-main)'}}>New Wager</h3>
+                            <div onClick={onClose} style={{cursor:'pointer'}}><i data-lucide="x" color="var(--text-main)"></i></div>
                         </div>
 
                         <label className="control-label">Who Won?</label>
                         <div className="winner-toggle">
-                            <div 
-                                className={`toggle-opt ${winner === 'Me' ? 'selected-green' : ''}`}
-                                onClick={() => setWinner('Me')}
-                            >
-                                Me
-                            </div>
-                            <div 
-                                className={`toggle-opt ${winner === 'Opponent' ? 'selected-red' : ''}`}
-                                onClick={() => setWinner('Opponent')}
-                            >
-                                Dave
-                            </div>
+                            <div className={`toggle-opt ${winner === 'Me' ? 'selected-green' : ''}`} onClick={() => setWinner('Me')}>Me</div>
+                            <div className={`toggle-opt ${winner === 'Opponent' ? 'selected-red' : ''}`} onClick={() => setWinner('Opponent')}>Dave</div>
                         </div>
 
                         <label className="control-label">Amount</label>
                         <div className="chip-grid">
                             {[1, 5, 10, 20, 50].map(val => (
-                                <div 
-                                    key={val} 
-                                    className={`chip ${amount === val ? 'active' : ''}`}
-                                    onClick={() => setAmount(val)}
-                                >
-                                    ${val}
-                                </div>
+                                <div key={val} className={`chip ${amount === val ? 'active' : ''}`} onClick={() => setAmount(val)}>${val}</div>
                             ))}
                         </div>
 
                         <label className="control-label">Bet Type</label>
                         <div className="type-grid">
                             {presets.map(p => (
-                                <div 
-                                    key={p.label} 
-                                    className={`type-card ${type === p.label ? 'active' : ''}`}
-                                    onClick={() => setType(p.label)}
-                                >
+                                <div key={p.label} className={`type-card ${type === p.label ? 'active' : ''}`} onClick={() => setType(p.label)}>
                                     <strong>{p.label}</strong>
                                     <small>{p.sub}</small>
                                 </div>
                             ))}
                         </div>
 
-                        <button 
-                            className="primary-btn" 
-                            disabled={!type}
-                            onClick={() => onSubmit(type, amount, winner)}
-                        >
-                            Place Bet <i data-lucide="check-circle" size="18"></i>
+                        <button className="btn-full btn-primary" disabled={!type} onClick={() => onSubmit(type, amount, winner)}>
+                            Place Bet <i data-lucide="check-circle" size="18" style={{marginLeft:8, verticalAlign:'middle'}}></i>
                         </button>
                     </div>
                 </div>
@@ -414,8 +432,6 @@ const app = initializeApp(firebaseConfig);
 
         const root = ReactDOM.createRoot(document.getElementById('root'));
         root.render(<App />);
-        
-        // Init Icons
         setInterval(() => lucide.createIcons(), 1000); 
     </script>
 </body>
