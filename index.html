@@ -12,18 +12,6 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="theme-color" content="#00594C">
 
-    <script>
-        window.onerror = function(msg, url, lineNo, columnNo, error) {
-            var report = document.getElementById('crash-report');
-            if(report) {
-                report.style.display = 'block';
-                report.innerHTML = "⚠️ APP ERROR ⚠️\n\n" + msg + "\n\n(If this says 'BLOCKED', disable your AdBlocker)";
-            }
-            return false;
-        };
-    </script>
-    <style>#crash-report { display: none; padding: 20px; background: #222; color: #ff6b6b; font-family: monospace; position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 9999; white-space: pre-wrap; }</style>
-
     <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
@@ -73,16 +61,11 @@
         /* MODAL */
         .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.6); backdrop-filter: blur(4px); display: flex; align-items: flex-end; z-index: 100; }
         .modal-content { background: var(--bg-card); width: 100%; border-radius: 24px 24px 0 0; padding: 24px; max-height: 90vh; overflow-y: auto; }
-        
         .section-label { font-size: 11px; font-weight: 800; color: var(--text-sub); margin-bottom: 12px; letter-spacing: 1px; text-transform: uppercase; }
-        
-        /* CHIPS (Participants/Amounts) */
         .chip-grid { display: flex; gap: 8px; margin-bottom: 24px; flex-wrap: wrap; }
         .chip { padding: 10px 16px; border: 1px solid var(--border); background: var(--bg-card); border-radius: 50px; font-weight: 600; color: var(--text-main); font-size: 14px; cursor: pointer; transition: all 0.2s; }
         .chip.active { background: var(--primary); color: white; border-color: var(--primary); box-shadow: 0 2px 8px rgba(0,0,0,0.15); }
-        .chip.active-red { background: #DC2626; color: white; border-color: #DC2626; } /* For opponent winner */
-
-        /* BET TYPE GRID */
+        .chip.active-red { background: #DC2626; color: white; border-color: #DC2626; } 
         .type-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 32px; }
         .type-card { border: 1px solid var(--border); padding: 16px; border-radius: 12px; text-align: center; background: var(--bg-card); cursor: pointer; position: relative; }
         .type-card.active { border-color: var(--primary); background: rgba(0, 89, 76, 0.05); box-shadow: 0 0 0 2px var(--primary); }
@@ -94,21 +77,20 @@
         .btn-full { width: 100%; padding: 16px; border-radius: 14px; font-weight: 700; font-size: 16px; cursor: pointer; text-align: center; border: none; }
         .btn-primary { background: var(--primary); color: white; }
 
-        /* LOGIN */
-        .login-screen { height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
+        /* LOGIN & SETUP */
+        .login-screen { height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 20px; }
         .loading-tip { font-size: 12px; opacity: 0.6; margin-top: 20px; color: #DC2626; display: none; }
     </style>
 </head>
 <body>
-    <div id="crash-report"></div>
     <div id="root"></div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
-        import { getFirestore, collection, addDoc, doc, updateDoc, arrayUnion, arrayRemove, getDoc, setDoc, query, orderBy, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
+        import { getFirestore, collection, addDoc, doc, updateDoc, getDocs, getDoc, setDoc, query, where, orderBy, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
         import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js";
         
-     // Your web app's Firebase configuration
+    // Your web app's Firebase configuration
 const firebaseConfig = {
   apiKey: "AIzaSyBPBps7eOq5gqyT5LuOnUGJkhPumBbZh-w",
   authDomain: "scratch-d0420.firebaseapp.com",
@@ -124,7 +106,7 @@ const firebaseConfig = {
         window.db = getFirestore(firebaseApp);
         window.auth = getAuth(firebaseApp);
         window.provider = new GoogleAuthProvider();
-        window.ops = { collection, addDoc, doc, updateDoc, arrayUnion, arrayRemove, getDoc, setDoc, query, orderBy, onSnapshot, serverTimestamp, signInWithPopup, signOut, onAuthStateChanged };
+        window.ops = { collection, addDoc, doc, updateDoc, getDocs, getDoc, setDoc, query, where, orderBy, onSnapshot, serverTimestamp, signInWithPopup, signOut, onAuthStateChanged };
     </script>
 
     <script type="text/babel">
@@ -132,11 +114,11 @@ const firebaseConfig = {
 
         function App() {
             const [user, setUser] = useState(null);
+            const [username, setUsername] = useState(null);
             const [loading, setLoading] = useState(true);
-            const [roster, setRoster] = useState(["Dave"]); 
+            const [roster, setRoster] = useState([]); // Array of { name, email, username }
 
             useEffect(() => {
-                // Show tip if loading takes too long
                 const timer = setTimeout(() => {
                     const tip = document.getElementById('loading-tip');
                     if(tip) tip.style.display = 'block';
@@ -148,14 +130,19 @@ const firebaseConfig = {
                         try {
                             const userRef = window.ops.doc(window.db, "users", u.uid);
                             const docSnap = await window.ops.getDoc(userRef);
-                            if (docSnap.exists() && docSnap.data().roster) {
-                                setRoster(docSnap.data().roster);
+                            
+                            // If user exists and has a username
+                            if (docSnap.exists()) {
+                                const data = docSnap.data();
+                                if (data.username) {
+                                    setUsername(data.username);
+                                    if(data.roster) setRoster(data.roster);
+                                }
                             } else {
-                                await window.ops.setDoc(userRef, { roster: ["Dave"] }, { merge: true });
+                                // First time login, create basic doc, username will remain null
+                                await window.ops.setDoc(userRef, { email: u.email, displayName: u.displayName }, { merge: true });
                             }
-                        } catch (e) {
-                            console.log("Offline or Blocked:", e);
-                        }
+                        } catch (e) { console.log("Offline/Block", e); }
                     }
                     setUser(u);
                     setLoading(false);
@@ -168,12 +155,50 @@ const firebaseConfig = {
                 try { await window.ops.signInWithPopup(window.auth, window.provider); } catch (e) { alert(e.message); }
             };
 
-            const updateRoster = async (newRoster) => {
+            const handleSetUsername = async (newUsername) => {
+                const cleanName = newUsername.trim().toLowerCase().replace(/\s+/g, '');
+                if (cleanName.length < 3) return alert("Username too short.");
+                
+                // Check Uniqueness
+                const q = window.ops.query(window.ops.collection(window.db, "users"), window.ops.where("username", "==", cleanName));
+                const snap = await window.ops.getDocs(q);
+                if (!snap.empty) return alert("Username taken! Try another.");
+
+                // Save
+                const userRef = window.ops.doc(window.db, "users", user.uid);
+                await window.ops.setDoc(userRef, { username: cleanName }, { merge: true });
+                setUsername(cleanName);
+            };
+
+            const addFriend = async (friendUsername) => {
+                const cleanName = friendUsername.trim().toLowerCase().replace('@', '');
+                
+                // Find User
+                const q = window.ops.query(window.ops.collection(window.db, "users"), window.ops.where("username", "==", cleanName));
+                const snap = await window.ops.getDocs(q);
+                
+                if (snap.empty) return alert("User @" + cleanName + " not found.");
+
+                const friendData = snap.docs[0].data();
+                if(friendData.email === user.email) return alert("You can't add yourself!");
+
+                // Add to Roster
+                const newFriend = { name: friendData.displayName || cleanName, email: friendData.email, username: cleanName };
+                // Prevent Duplicates
+                if(roster.some(r => r.username === cleanName)) return alert("Already in roster.");
+
+                const newRoster = [...roster, newFriend];
                 setRoster(newRoster);
-                if (user) {
-                    const userRef = window.ops.doc(window.db, "users", user.uid);
-                    await window.ops.updateDoc(userRef, { roster: newRoster });
-                }
+                
+                const userRef = window.ops.doc(window.db, "users", user.uid);
+                await window.ops.updateDoc(userRef, { roster: newRoster });
+            };
+
+            const removeFriend = async (friendEmail) => {
+                const newRoster = roster.filter(f => f.email !== friendEmail);
+                setRoster(newRoster);
+                const userRef = window.ops.doc(window.db, "users", user.uid);
+                await window.ops.updateDoc(userRef, { roster: newRoster });
             };
 
             if (loading) return (
@@ -196,20 +221,36 @@ const firebaseConfig = {
                 );
             }
 
-            return <MainApp user={user} roster={roster} onUpdateRoster={updateRoster} />;
+            // USERNAME SETUP SCREEN
+            if (!username) {
+                return (
+                    <div className="login-screen">
+                        <h2 style={{fontFamily:'Times New Roman'}}>Create Username</h2>
+                        <p style={{opacity:0.6, fontSize:14, marginBottom:20}}>This is how friends will find you.</p>
+                        <input id="usernameInput" className="input-std" placeholder="e.g. Tiger" style={{textAlign:'center', fontSize:20, maxWidth:200, marginBottom:20}} />
+                        <button className="btn-full btn-primary" style={{maxWidth:200}} onClick={() => handleSetUsername(document.getElementById('usernameInput').value)}>Set Username</button>
+                    </div>
+                );
+            }
+
+            return <MainApp user={user} username={username} roster={roster} onAddFriend={addFriend} onRemoveFriend={removeFriend} />;
         }
 
-        function MainApp({ user, roster, onUpdateRoster }) {
+        function MainApp({ user, username, roster, onAddFriend, onRemoveFriend }) {
             const [view, setView] = useState('ledger'); 
             const [bets, setBets] = useState([]);
             const [modalOpen, setModalOpen] = useState(false);
 
             useEffect(() => {
-                const q = window.ops.query(window.ops.collection(window.db, "bets"), window.ops.orderBy("createdAt", "desc"));
+                const q = window.ops.query(
+                    window.ops.collection(window.db, "bets"), 
+                    window.ops.where("participants", "array-contains", user.email),
+                    window.ops.orderBy("createdAt", "desc")
+                );
+                
                 return window.ops.onSnapshot(q, (snapshot) => {
                     const allBets = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                    // Banker Mode: Show only bets I created
-                    setBets(allBets.filter(b => b.createdBy === user.uid));
+                    setBets(allBets);
                 });
             }, [user]);
 
@@ -217,9 +258,9 @@ const firebaseConfig = {
                 let balance = 0;
                 bets.forEach(b => {
                     const numPlayers = b.participants ? b.participants.length : 2;
-                    if (b.winner === 'Me') {
+                    if (b.winnerEmail === user.email) {
                         balance += (b.amount * (numPlayers - 1));
-                    } else if (b.participants && b.participants.includes('Me')) {
+                    } else {
                         balance -= b.amount;
                     }
                 });
@@ -261,22 +302,25 @@ const firebaseConfig = {
                                 <i data-lucide="history" size="18"></i> Recent Activity
                             </div>
                             <div className="feed-list">
-                                {bets.map(bet => (
-                                    <div key={bet.id} className="bet-row">
-                                        <div className="bet-icon">
-                                            {bet.img ? <img src={bet.img} onError={(e)=>{e.target.style.display='none'}} /> : <i data-lucide="trophy" color="var(--primary)" style={{marginTop:6}}></i>}
-                                        </div>
-                                        <div className="bet-info">
-                                            <div style={{fontWeight:600, fontSize:16}}>{bet.type}</div>
-                                            <div style={{fontSize:13, color:'var(--text-sub)'}}>
-                                                {bet.winner === 'Me' ? 'You won' : `${bet.winner} won`}
+                                {bets.map(bet => {
+                                    const iWon = bet.winnerEmail === user.email;
+                                    return (
+                                        <div key={bet.id} className="bet-row">
+                                            <div className="bet-icon">
+                                                {bet.img ? <img src={bet.img} onError={(e)=>{e.target.style.display='none'}} /> : <i data-lucide="trophy" color="var(--primary)" style={{marginTop:6}}></i>}
+                                            </div>
+                                            <div className="bet-info">
+                                                <div style={{fontWeight:600, fontSize:16}}>{bet.type}</div>
+                                                <div style={{fontSize:13, color:'var(--text-sub)'}}>
+                                                    {iWon ? 'You won' : `${bet.winnerName || 'Opponent'} won`}
+                                                </div>
+                                            </div>
+                                            <div className={`bet-val ${iWon ? 'text-green' : 'text-red'}`}>
+                                                {iWon ? '+' : '-'}${bet.amount}
                                             </div>
                                         </div>
-                                        <div className={`bet-val ${bet.winner === 'Me' ? 'text-green' : 'text-red'}`}>
-                                            {bet.winner === 'Me' ? '+' : '-'}${bet.amount}
-                                        </div>
-                                    </div>
-                                ))}
+                                    );
+                                })}
                             </div>
                             <button className="fab" onClick={() => setModalOpen(true)}><i data-lucide="plus" size="32"></i></button>
                         </div>
@@ -287,69 +331,82 @@ const firebaseConfig = {
                             <div style={{textAlign:'center', marginBottom:30}}>
                                 <img src={user.photoURL} style={{width:80, borderRadius:'50%', border:'3px solid var(--primary)'}} />
                                 <h2>{user.displayName}</h2>
+                                <p style={{fontSize:14, fontWeight:'bold', color:'var(--primary)'}}>@{username}</p>
                             </div>
                             
                             <div className="section-label">MY ROSTER</div>
                             <div className="settings-card">
+                                {roster.length === 0 && <div style={{padding:10, color:'#999', fontSize:13}}>No friends added yet.</div>}
                                 {roster.map((friend, i) => (
                                     <div key={i} className="roster-item">
-                                        <span style={{fontWeight:600}}>{friend}</span>
-                                        <div className="delete-btn" onClick={() => onUpdateRoster(roster.filter(n => n !== friend))}>×</div>
+                                        <div>
+                                            <span style={{fontWeight:600, display:'block'}}>{friend.name}</span>
+                                            <span style={{fontSize:12, color:'var(--primary)'}}>@{friend.username}</span>
+                                        </div>
+                                        <div className="delete-btn" onClick={() => onRemoveFriend(friend.email)}>×</div>
                                     </div>
                                 ))}
                                 <div className="add-row">
-                                    <input id="newFriend" className="input-std" placeholder="Add friend name..." />
+                                    <input id="newFriendUser" className="input-std" placeholder="Search Username..." />
                                     <button className="btn-primary" style={{borderRadius:8, padding:'0 16px', border:'none', cursor:'pointer'}} onClick={() => {
-                                        const val = document.getElementById('newFriend').value;
-                                        if(val) { onUpdateRoster([...roster, val]); document.getElementById('newFriend').value = ''; }
+                                        const val = document.getElementById('newFriendUser').value;
+                                        if(val) { onAddFriend(val); document.getElementById('newFriendUser').value = ''; }
                                     }}>Add</button>
                                 </div>
                             </div>
-
                             <button className="btn-full" style={{background:'transparent', border:'1px solid #DC2626', color:'#DC2626'}} onClick={() => window.ops.signOut(window.auth)}>Sign Out</button>
                         </div>
                     )}
 
-                    {modalOpen && <BetModal roster={roster} onClose={() => setModalOpen(false)} onSubmit={handleAddBet} />}
+                    {modalOpen && <BetModal user={user} username={username} roster={roster} onClose={() => setModalOpen(false)} onSubmit={handleAddBet} />}
                 </div>
             );
         }
 
-        function BetModal({ roster, onClose, onSubmit }) {
-            const [participants, setParticipants] = useState(['Me']); 
-            const [winner, setWinner] = useState(null);
+        function BetModal({ user, username, roster, onClose, onSubmit }) {
+            // Self is now { name, email, username }
+            const [participants, setParticipants] = useState([{ name: 'Me', email: user.email, username: username }]); 
+            const [winnerEmail, setWinnerEmail] = useState(null);
             const [amount, setAmount] = useState(5);
             const [type, setType] = useState(null);
             const [customType, setCustomType] = useState("");
 
-            // --- UPDATED PRESETS (CP + ICONS) ---
             const presets = [
-                { id: "CP", label: "Closest to Pin", img: "./images/bet_cp.png" },
-                { id: "Drive", label: "Longest Drive", img: "./images/bet_drive.png" },
-                { id: "Sand", label: "Sand Save", img: "./images/bet_sand.png" },
-                { id: "Skin", label: "Hole Winner", img: "./images/bet_skin.png" },
-                { id: "Custom", label: "Manual Entry", img: "./images/bet_custom.png" }
+                { id: "DART", label: "Closest to Pin", img: "./images/bet_cp.png" },
+                { id: "HAMMER", label: "Longest Drive", img: "./images/bet_drive.png" },
+                { id: "SPLASH", label: "Sand Save", img: "./images/bet_sand.png" },
+                { id: "SKIN", label: "Hole Winner", img: "./images/bet_skin.png" },
+                { id: "CUSTOM", label: "Manual Entry", img: "./images/bet_custom.png" }
             ];
 
             useEffect(() => { setTimeout(() => lucide.createIcons(), 100) }, []);
 
-            const toggleParticipant = (name) => {
-                if (participants.includes(name)) {
-                    setParticipants(participants.filter(p => p !== name));
+            const toggleParticipant = (friend) => {
+                const exists = participants.find(p => p.email === friend.email);
+                if (exists) {
+                    setParticipants(participants.filter(p => p.email !== friend.email));
                 } else {
-                    setParticipants([...participants, name]);
+                    setParticipants([...participants, friend]);
                 }
             };
 
             const handleSubmit = () => {
-                const finalType = type.id === 'Custom' ? customType : type.id;
-                const finalImg = type.id === 'Custom' ? null : type.img;
+                const finalType = type.id === 'CUSTOM' ? customType : type.id;
+                const finalImg = type.id === 'CUSTOM' ? null : type.img;
+                
+                const winnerObj = participants.find(p => p.email === winnerEmail);
+                // If I won, store my username, else store theirs
+                const winnerName = winnerObj ? (winnerObj.email === user.email ? username : winnerObj.username) : 'Unknown';
+
+                const participantEmails = participants.map(p => p.email);
+
                 onSubmit({
                     type: finalType,
                     img: finalImg,
                     amount: parseInt(amount),
-                    winner: winner,
-                    participants: participants
+                    winnerEmail: winnerEmail,
+                    winnerName: winnerName,
+                    participants: participantEmails
                 });
             };
 
@@ -361,35 +418,36 @@ const firebaseConfig = {
                             <div onClick={onClose} style={{cursor:'pointer'}}><i data-lucide="x"></i></div>
                         </div>
 
-                        {/* 1. WHO IS IN? */}
                         <div className="section-label">WHO IS IN THE BET?</div>
                         <div className="chip-grid">
-                            {['Me', ...roster].map(name => (
-                                <div key={name} 
-                                    className={`chip ${participants.includes(name) ? 'active' : ''}`}
-                                    onClick={() => toggleParticipant(name)}>
-                                    {name}
-                                </div>
-                            ))}
+                            <div className={`chip active`}>Me</div>
+                            {roster.map(friend => {
+                                const isSelected = participants.find(p => p.email === friend.email);
+                                return (
+                                    <div key={friend.email} 
+                                        className={`chip ${isSelected ? 'active' : ''}`}
+                                        onClick={() => toggleParticipant(friend)}>
+                                        @{friend.username}
+                                    </div>
+                                );
+                            })}
                         </div>
 
-                        {/* 2. WHO WON? */}
                         {participants.length > 0 && (
                             <>
                                 <div className="section-label">WHO WON?</div>
                                 <div className="chip-grid">
-                                    {participants.map(name => (
-                                        <div key={name} 
-                                            className={`chip ${winner === name ? 'active-red' : ''}`}
-                                            onClick={() => setWinner(name)}>
-                                            {name}
+                                    {participants.map(p => (
+                                        <div key={p.email} 
+                                            className={`chip ${winnerEmail === p.email ? 'active-red' : ''}`}
+                                            onClick={() => setWinnerEmail(p.email)}>
+                                            {p.name === 'Me' ? 'Me' : '@'+p.username}
                                         </div>
                                     ))}
                                 </div>
                             </>
                         )}
 
-                        {/* 3. AMOUNT */}
                         <div className="section-label">AMOUNT (PER PERSON)</div>
                         <div className="chip-grid">
                             {[1, 5, 10, 20, 50].map(val => (
@@ -397,20 +455,18 @@ const firebaseConfig = {
                             ))}
                         </div>
 
-                        {/* 4. TYPE */}
                         <div className="section-label">BET TYPE</div>
                         <div className="type-grid">
                             {presets.map(p => (
                                 <div key={p.id} className={`type-card ${type?.id === p.id ? 'active' : ''}`} onClick={() => setType(p)}>
                                     <img src={p.img} className="type-img" onError={(e) => e.target.style.display='none'} />
-                                    <div style={{fontWeight:700, fontSize:14}}>{p.id === 'Custom' ? 'Custom' : p.id}</div>
+                                    <div style={{fontWeight:700, fontSize:14}}>{p.id === 'CUSTOM' ? 'Custom' : p.id}</div>
                                     <div style={{fontSize:11, color:'var(--text-sub)'}}>{p.label}</div>
                                 </div>
                             ))}
                         </div>
 
-                        {/* 5. CUSTOM INPUT */}
-                        {type?.id === 'Custom' && (
+                        {type?.id === 'CUSTOM' && (
                             <div style={{marginBottom:32}}>
                                 <div className="section-label">ENTER BET DETAILS</div>
                                 <input className="input-std" style={{width:'100%'}} placeholder="e.g. Hit the green on Par 3" value={customType} onChange={(e) => setCustomType(e.target.value)} />
@@ -418,7 +474,7 @@ const firebaseConfig = {
                         )}
 
                         <button className="btn-full btn-primary" 
-                            disabled={!winner || !type || (type.id==='Custom' && !customType)} 
+                            disabled={!winnerEmail || !type || (type.id==='CUSTOM' && !customType)} 
                             onClick={handleSubmit}>
                             Place Bet <i data-lucide="check-circle" size="18" style={{marginLeft:8, verticalAlign:'text-bottom'}}></i>
                         </button>
