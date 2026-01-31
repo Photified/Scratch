@@ -49,11 +49,12 @@
         .bet-info { flex: 1; }
         .bet-val { font-family: var(--font-serif); font-size: 18px; font-weight: 700; }
 
-        /* SETTINGS & INPUTS */
+        /* SETTINGS & ROSTER */
         .settings-view { padding: 24px; }
         .settings-card { background: var(--bg-body); border-radius: 12px; border: 1px solid var(--border); padding: 16px; margin-bottom: 24px; }
-        .roster-item { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid rgba(0,0,0,0.05); }
-        .delete-btn { color: #DC2626; font-size: 18px; cursor: pointer; padding: 4px; }
+        .roster-item { display: flex; justify-content: space-between; align-items: center; padding: 16px 0; border-bottom: 1px solid rgba(0,0,0,0.05); cursor: pointer; }
+        .roster-item:active { opacity: 0.6; }
+        .delete-btn { color: #DC2626; font-size: 18px; cursor: pointer; padding: 8px; }
         .add-row { display: flex; gap: 8px; margin-top: 12px; }
         
         .input-std { padding: 12px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg-card); color: var(--text-main); font-size: 16px; -webkit-appearance: none; }
@@ -112,7 +113,6 @@ const firebaseConfig = {
 };
 
 // Initialize Firebase
-
         const firebaseApp = initializeApp(firebaseConfig);
         window.db = getFirestore(firebaseApp);
         window.auth = getAuth(firebaseApp);
@@ -290,6 +290,8 @@ const firebaseConfig = {
 
         function MainApp({ user, username, roster, onAddFriend, onRemoveFriend, showAppAlert }) {
             const [view, setView] = useState('ledger'); 
+            // New state for Friend Profile View
+            const [viewFriend, setViewFriend] = useState(null); // Stores the friend object {name, email, username}
             const [bets, setBets] = useState([]);
             const [modalOpen, setModalOpen] = useState(false);
 
@@ -306,15 +308,17 @@ const firebaseConfig = {
                 });
             }, [user]);
 
-            const stats = useMemo(() => {
+            const getStats = (betList) => {
                 let balance = 0;
-                bets.forEach(b => {
+                betList.forEach(b => {
                     const numPlayers = b.participants ? b.participants.length : 2;
                     if (b.winnerEmail === user.email) balance += (b.amount * (numPlayers - 1));
                     else balance -= b.amount;
                 });
                 return balance;
-            }, [bets]);
+            };
+
+            const stats = useMemo(() => getStats(bets), [bets]);
 
             const handleAddBet = async (betData) => {
                 try {
@@ -327,19 +331,51 @@ const firebaseConfig = {
                 } catch (e) { showAppAlert("Error", e.message); }
             };
 
+            // --- HELPER TO GET OPPONENT NAME ---
+            const getBetContext = (bet) => {
+                const iWon = bet.winnerEmail === user.email;
+                if (iWon) {
+                    // Find loser name. In 1v1, it's the other person.
+                    // We don't store loserName explicitly in DB, so we look in roster or use logic.
+                    // But we DO have participant emails.
+                    const opponents = bet.participants.filter(e => e !== user.email);
+                    if (opponents.length === 1) {
+                        // Try to find name in Roster
+                        const friend = roster.find(r => r.email === opponents[0]);
+                        return `vs ${friend ? friend.name : 'Opponent'}`;
+                    } else {
+                        return `vs ${opponents.length} others`;
+                    }
+                } else {
+                    // I lost.
+                    return `vs ${bet.winnerName || 'Opponent'}`;
+                }
+            };
+
             return (
                 <div className="app-container">
                     <header className="header">
-                        <div className="brand"><h1>Scratch</h1></div>
-                        <div className="icon-btn" onClick={() => setView('settings')}><i data-lucide="settings"></i></div>
+                        <div className="brand">
+                            {viewFriend ? (
+                                <div onClick={() => setViewFriend(null)} style={{display:'flex', alignItems:'center', gap:8, cursor:'pointer'}}>
+                                    <i data-lucide="arrow-left" size="20"></i> {viewFriend.name}
+                                </div>
+                            ) : (
+                                <h1>Scratch</h1>
+                            )}
+                        </div>
+                        {!viewFriend && <div className="icon-btn" onClick={() => setView('settings')}><i data-lucide="settings"></i></div>}
                     </header>
 
-                    <div className="nav-tabs">
-                        <div className={`nav-item ${view === 'ledger' ? 'active' : ''}`} onClick={() => setView('ledger')}>Ledger</div>
-                        <div className={`nav-item ${view === 'settings' ? 'active' : ''}`} onClick={() => setView('settings')}>Settings</div>
-                    </div>
+                    {!viewFriend && (
+                        <div className="nav-tabs">
+                            <div className={`nav-item ${view === 'ledger' ? 'active' : ''}`} onClick={() => setView('ledger')}>Ledger</div>
+                            <div className={`nav-item ${view === 'settings' ? 'active' : ''}`} onClick={() => setView('settings')}>Roster</div>
+                        </div>
+                    )}
 
-                    {view === 'ledger' && (
+                    {/* --- MAIN LEDGER --- */}
+                    {!viewFriend && view === 'ledger' && (
                         <div className="content">
                             <div className="hero-card">
                                 <div style={{fontSize:11, fontWeight:800, color:'var(--text-sub)', textTransform:'uppercase'}}>Net Balance</div>
@@ -353,6 +389,7 @@ const firebaseConfig = {
                             <div className="feed-list">
                                 {bets.map(bet => {
                                     const iWon = bet.winnerEmail === user.email;
+                                    const context = getBetContext(bet);
                                     return (
                                         <div key={bet.id} className="bet-row">
                                             <div className="bet-icon">
@@ -361,9 +398,8 @@ const firebaseConfig = {
                                             <div className="bet-info">
                                                 <div style={{fontWeight:600, fontSize:16}}>{bet.type}</div>
                                                 <div style={{fontSize:13, color:'var(--text-sub)'}}>
-                                                    {iWon ? 'You won' : `${bet.winnerName || 'Opponent'} won`}
+                                                    {iWon ? 'You won' : 'You lost'} <strong style={{color:'var(--text-main)'}}>{context}</strong>
                                                 </div>
-                                                {/* SHOW COURSE & HOLE IF AVAILABLE */}
                                                 {(bet.course || bet.hole) && (
                                                     <div style={{fontSize:11, color:'var(--primary)', marginTop:2, fontWeight:500}}>
                                                         {bet.hole ? `Hole ${bet.hole}` : ''} {bet.hole && bet.course ? '•' : ''} {bet.course}
@@ -381,7 +417,61 @@ const firebaseConfig = {
                         </div>
                     )}
 
-                    {view === 'settings' && (
+                    {/* --- FRIEND PROFILE VIEW --- */}
+                    {viewFriend && (
+                        <div className="content">
+                            {/* Filter bets for this friend */}
+                            {(() => {
+                                const friendBets = bets.filter(b => b.participants && b.participants.includes(viewFriend.email));
+                                const friendBalance = getStats(friendBets);
+                                
+                                return (
+                                    <>
+                                        <div className="hero-card">
+                                            <div style={{fontSize:11, fontWeight:800, color:'var(--text-sub)', textTransform:'uppercase'}}>Vs {viewFriend.name}</div>
+                                            <div className={`hero-amount ${friendBalance >= 0 ? 'text-green' : 'text-red'}`}>
+                                                {friendBalance >= 0 ? '+' : '-'}${Math.abs(friendBalance)}
+                                            </div>
+                                            <div style={{marginTop:8, fontSize:14, color:'var(--text-sub)'}}>@{viewFriend.username}</div>
+                                        </div>
+                                        <div style={{padding:'24px 20px 10px', fontWeight:700, display:'flex', alignItems:'center', gap:8}}>
+                                            <i data-lucide="history" size="18"></i> History vs {viewFriend.name}
+                                        </div>
+                                        <div className="feed-list">
+                                            {friendBets.length === 0 && <div style={{padding:20, color:'#999', textAlign:'center'}}>No bets recorded yet.</div>}
+                                            {friendBets.map(bet => {
+                                                const iWon = bet.winnerEmail === user.email;
+                                                return (
+                                                    <div key={bet.id} className="bet-row">
+                                                        <div className="bet-icon">
+                                                            {bet.img ? <img src={bet.img} onError={(e)=>{e.target.style.display='none'}} /> : <i data-lucide="trophy" color="var(--primary)" style={{marginTop:6}}></i>}
+                                                        </div>
+                                                        <div className="bet-info">
+                                                            <div style={{fontWeight:600, fontSize:16}}>{bet.type}</div>
+                                                            <div style={{fontSize:13, color:'var(--text-sub)'}}>
+                                                                {iWon ? 'You won' : `${viewFriend.name} won`}
+                                                            </div>
+                                                            {(bet.course || bet.hole) && (
+                                                                <div style={{fontSize:11, color:'var(--primary)', marginTop:2, fontWeight:500}}>
+                                                                    {bet.hole ? `Hole ${bet.hole}` : ''} {bet.hole && bet.course ? '•' : ''} {bet.course}
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                        <div className={`bet-val ${iWon ? 'text-green' : 'text-red'}`}>
+                                                            {iWon ? '+' : '-'}${bet.amount}
+                                                        </div>
+                                                    </div>
+                                                );
+                                            })}
+                                        </div>
+                                    </>
+                                );
+                            })()}
+                        </div>
+                    )}
+
+                    {/* --- SETTINGS / ROSTER --- */}
+                    {!viewFriend && view === 'settings' && (
                         <div className="settings-view">
                             <div style={{textAlign:'center', marginBottom:30}}>
                                 <img src={user.photoURL} style={{width:80, borderRadius:'50%', border:'3px solid var(--primary)'}} />
@@ -392,12 +482,12 @@ const firebaseConfig = {
                             <div className="settings-card">
                                 {roster.length === 0 && <div style={{padding:10, color:'#999', fontSize:13}}>No friends added yet.</div>}
                                 {roster.map((friend, i) => (
-                                    <div key={i} className="roster-item">
+                                    <div key={i} className="roster-item" onClick={() => setViewFriend(friend)}>
                                         <div>
-                                            <span style={{fontWeight:600, display:'block'}}>{friend.name}</span>
+                                            <span style={{fontWeight:600, display:'block'}}>{friend.name} <i data-lucide="chevron-right" size="14" style={{verticalAlign:'middle', marginLeft:4, opacity:0.3}}></i></span>
                                             <span style={{fontSize:12, color:'var(--primary)'}}>@{friend.username}</span>
                                         </div>
-                                        <div className="delete-btn" onClick={() => onRemoveFriend(friend.email)}>×</div>
+                                        <div className="delete-btn" onClick={(e) => { e.stopPropagation(); onRemoveFriend(friend.email); }}>×</div>
                                     </div>
                                 ))}
                                 <div className="add-row">
@@ -423,8 +513,6 @@ const firebaseConfig = {
             const [amount, setAmount] = useState(5);
             const [type, setType] = useState(null);
             const [customType, setCustomType] = useState("");
-            
-            // NEW STATE FOR HOLE & COURSE
             const [hole, setHole] = useState(1);
             const [course, setCourse] = useState(localStorage.getItem('lastCourse') || "");
 
@@ -454,7 +542,6 @@ const firebaseConfig = {
                 const winnerName = winnerObj ? (winnerObj.email === user.email ? username : winnerObj.username) : 'Unknown';
                 const participantEmails = participants.map(p => p.email);
 
-                // Save Course to Local Storage for next time
                 if(course) localStorage.setItem('lastCourse', course);
 
                 onSubmit({
@@ -464,7 +551,6 @@ const firebaseConfig = {
                     winnerEmail: winnerEmail,
                     winnerName: winnerName,
                     participants: participantEmails,
-                    // Pass Hole/Course Data
                     hole: hole,
                     course: course
                 });
@@ -478,30 +564,19 @@ const firebaseConfig = {
                             <div onClick={onClose} style={{cursor:'pointer'}}><i data-lucide="x"></i></div>
                         </div>
 
-                        {/* NEW: COURSE & HOLE SECTION */}
+                        {/* COURSE & HOLE */}
                         <div style={{background:'var(--bg-body)', padding:16, borderRadius:12, marginBottom:24}}>
                             <div className="section-label">LOCATION</div>
                             <div style={{display:'flex', gap:10, alignItems:'center', marginBottom:10}}>
                                 <div style={{flex:1}}>
-                                    <input 
-                                        className="input-std" 
-                                        style={{width:'100%', fontSize:14}} 
-                                        placeholder="Course Name..." 
-                                        value={course}
-                                        onChange={(e) => setCourse(e.target.value)}
-                                    />
+                                    <input className="input-std" style={{width:'100%', fontSize:14}} placeholder="Course Name..." value={course} onChange={(e) => setCourse(e.target.value)} />
                                 </div>
                                 <div style={{width:60, textAlign:'center'}}>
                                     <div style={{fontSize:10, color:'var(--text-sub)', fontWeight:700}}>HOLE</div>
                                     <div style={{fontSize:24, fontWeight:700, color:'var(--primary)'}}>{hole}</div>
                                 </div>
                             </div>
-                            <input 
-                                type="range" 
-                                min="1" max="18" 
-                                value={hole} 
-                                onChange={(e) => setHole(e.target.value)} 
-                            />
+                            <input type="range" min="1" max="18" value={hole} onChange={(e) => setHole(e.target.value)} />
                         </div>
 
                         <div className="section-label">WHO IS IN THE BET?</div>
