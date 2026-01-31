@@ -107,7 +107,7 @@
         import { getFirestore, collection, addDoc, doc, updateDoc, arrayUnion, arrayRemove, getDoc, setDoc, query, orderBy, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
         import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js";
         
-      // Your web app's Firebase configuration
+   // Your web app's Firebase configuration
 const firebaseConfig = {
   apiKey: "AIzaSyBPBps7eOq5gqyT5LuOnUGJkhPumBbZh-w",
   authDomain: "scratch-d0420.firebaseapp.com",
@@ -118,6 +118,7 @@ const firebaseConfig = {
 };
 
 // Initialize Firebase
+
         const firebaseApp = initializeApp(firebaseConfig);
         window.db = getFirestore(firebaseApp);
         window.auth = getAuth(firebaseApp);
@@ -200,15 +201,10 @@ const firebaseConfig = {
             const stats = useMemo(() => {
                 let balance = 0;
                 bets.forEach(b => {
-                    // Logic: If I am the winner, I get Amount * (Losers Count).
-                    // If I am a loser, I lose Amount.
-                    // Participants includes Me.
                     const numPlayers = b.participants ? b.participants.length : 2;
                     if (b.winner === 'Me') {
-                        // I won. Everyone else pays me.
                         balance += (b.amount * (numPlayers - 1));
                     } else if (b.participants && b.participants.includes('Me')) {
-                        // I lost. I pay the winner.
                         balance -= b.amount;
                     }
                 });
@@ -253,7 +249,6 @@ const firebaseConfig = {
                                 {bets.map(bet => (
                                     <div key={bet.id} className="bet-row">
                                         <div className="bet-icon">
-                                            {/* Fallback to trophy icon if image fails or custom */}
                                             {bet.img ? <img src={bet.img} onError={(e)=>{e.target.style.display='none'}} /> : <i data-lucide="trophy" color="var(--primary)" style={{marginTop:6}}></i>}
                                         </div>
                                         <div className="bet-info">
@@ -306,27 +301,25 @@ const firebaseConfig = {
         }
 
         function BetModal({ roster, onClose, onSubmit }) {
-            // Participants includes "Me" by default
             const [participants, setParticipants] = useState(['Me']); 
             const [winner, setWinner] = useState(null);
             const [amount, setAmount] = useState(5);
             const [type, setType] = useState(null);
             const [customType, setCustomType] = useState("");
 
-            // The Preset Buttons (Now with Images)
+            // --- UPDATED PRESETS (CP instead of KP) ---
             const presets = [
-                { id: "KP", label: "Closest to Pin", img: "./images/bet_kp.png" },
+                { id: "CP", label: "Closest to Pin", img: "./images/bet_cp.png" },
                 { id: "Drive", label: "Longest Drive", img: "./images/bet_drive.png" },
                 { id: "Sand", label: "Sand Save", img: "./images/bet_sand.png" },
                 { id: "Skin", label: "Hole Winner", img: "./images/bet_skin.png" },
-                { id: "Custom", label: "Manual Entry", img: "./images/bet_custom.png" } // Special ID
+                { id: "Custom", label: "Manual Entry", img: "./images/bet_custom.png" }
             ];
 
             useEffect(() => { setTimeout(() => lucide.createIcons(), 100) }, []);
 
             const toggleParticipant = (name) => {
                 if (participants.includes(name)) {
-                    // Can't remove yourself if you're the only one, logic can vary but let's allow flexibility
                     setParticipants(participants.filter(p => p !== name));
                 } else {
                     setParticipants([...participants, name]);
@@ -365,7 +358,7 @@ const firebaseConfig = {
                             ))}
                         </div>
 
-                        {/* 2. WHO WON? (Only show selected participants) */}
+                        {/* 2. WHO WON? */}
                         {participants.length > 0 && (
                             <>
                                 <div className="section-label">WHO WON?</div>
@@ -401,17 +394,11 @@ const firebaseConfig = {
                             ))}
                         </div>
 
-                        {/* 5. CUSTOM INPUT (If selected) */}
+                        {/* 5. CUSTOM INPUT */}
                         {type?.id === 'Custom' && (
                             <div style={{marginBottom:32}}>
                                 <div className="section-label">ENTER BET DETAILS</div>
-                                <input 
-                                    className="input-std" 
-                                    style={{width:'100%'}} 
-                                    placeholder="e.g. Hit the green on Par 3" 
-                                    value={customType}
-                                    onChange={(e) => setCustomType(e.target.value)}
-                                />
+                                <input className="input-std" style={{width:'100%'}} placeholder="e.g. Hit the green on Par 3" value={customType} onChange={(e) => setCustomType(e.target.value)} />
                             </div>
                         )}
 
