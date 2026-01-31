@@ -17,7 +17,7 @@
             var report = document.getElementById('crash-report');
             if(report) {
                 report.style.display = 'block';
-                report.innerHTML = "⚠️ APP CRASHED ⚠️\n\n" + msg + "\n\nLine: " + lineNo;
+                report.innerHTML = "⚠️ APP ERROR ⚠️\n\n" + msg + "\n\n(If this says 'BLOCKED', disable your AdBlocker)";
             }
             return false;
         };
@@ -56,7 +56,7 @@
         .content { flex: 1; padding-bottom: 100px; }
         .feed-list { padding: 0 16px; }
         .bet-row { display: flex; align-items: center; padding: 16px 0; border-bottom: 1px solid var(--border); }
-        .bet-icon { width: 48px; height: 48px; padding: 8px; background: var(--bg-body); border-radius: 12px; margin-right: 16px; border: 1px solid var(--border); }
+        .bet-icon { width: 48px; height: 48px; padding: 8px; background: var(--bg-body); border-radius: 12px; margin-right: 16px; border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; }
         .bet-icon img { width: 100%; height: 100%; object-fit: contain; }
         .bet-info { flex: 1; }
         .bet-val { font-family: var(--font-serif); font-size: 18px; font-weight: 700; }
@@ -96,6 +96,7 @@
 
         /* LOGIN */
         .login-screen { height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
+        .loading-tip { font-size: 12px; opacity: 0.6; margin-top: 20px; color: #DC2626; display: none; }
     </style>
 </head>
 <body>
@@ -107,7 +108,7 @@
         import { getFirestore, collection, addDoc, doc, updateDoc, arrayUnion, arrayRemove, getDoc, setDoc, query, orderBy, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
         import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js";
         
-   // Your web app's Firebase configuration
+     // Your web app's Firebase configuration
 const firebaseConfig = {
   apiKey: "AIzaSyBPBps7eOq5gqyT5LuOnUGJkhPumBbZh-w",
   authDomain: "scratch-d0420.firebaseapp.com",
@@ -132,26 +133,35 @@ const firebaseConfig = {
         function App() {
             const [user, setUser] = useState(null);
             const [loading, setLoading] = useState(true);
-            const [roster, setRoster] = useState(["Dave"]); // Default friend
+            const [roster, setRoster] = useState(["Dave"]); 
 
             useEffect(() => {
+                // Show tip if loading takes too long
+                const timer = setTimeout(() => {
+                    const tip = document.getElementById('loading-tip');
+                    if(tip) tip.style.display = 'block';
+                }, 4000);
+
                 if (!window.ops) return;
                 const unsubscribe = window.ops.onAuthStateChanged(window.auth, async (u) => {
                     if (u) {
-                        // Load user roster from DB
-                        const userRef = window.ops.doc(window.db, "users", u.uid);
-                        const docSnap = await window.ops.getDoc(userRef);
-                        if (docSnap.exists() && docSnap.data().roster) {
-                            setRoster(docSnap.data().roster);
-                        } else {
-                            // Init roster if new
-                            await window.ops.setDoc(userRef, { roster: ["Dave"] }, { merge: true });
+                        try {
+                            const userRef = window.ops.doc(window.db, "users", u.uid);
+                            const docSnap = await window.ops.getDoc(userRef);
+                            if (docSnap.exists() && docSnap.data().roster) {
+                                setRoster(docSnap.data().roster);
+                            } else {
+                                await window.ops.setDoc(userRef, { roster: ["Dave"] }, { merge: true });
+                            }
+                        } catch (e) {
+                            console.log("Offline or Blocked:", e);
                         }
                     }
                     setUser(u);
                     setLoading(false);
+                    clearTimeout(timer);
                 });
-                return unsubscribe;
+                return () => { unsubscribe(); clearTimeout(timer); }
             }, []);
 
             const handleLogin = async () => {
@@ -166,7 +176,12 @@ const firebaseConfig = {
                 }
             };
 
-            if (loading) return <div className="login-screen">Loading...</div>;
+            if (loading) return (
+                <div className="login-screen">
+                    <div>Loading...</div>
+                    <div id="loading-tip" className="loading-tip">Taking a long time? <br/>Disable AdBlocker or try Incognito.</div>
+                </div>
+            );
 
             if (!user) {
                 return (
@@ -193,7 +208,7 @@ const firebaseConfig = {
                 const q = window.ops.query(window.ops.collection(window.db, "bets"), window.ops.orderBy("createdAt", "desc"));
                 return window.ops.onSnapshot(q, (snapshot) => {
                     const allBets = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                    // Filter bets where I am the creator (Banker Mode)
+                    // Banker Mode: Show only bets I created
                     setBets(allBets.filter(b => b.createdBy === user.uid));
                 });
             }, [user]);
@@ -307,7 +322,7 @@ const firebaseConfig = {
             const [type, setType] = useState(null);
             const [customType, setCustomType] = useState("");
 
-            // --- UPDATED PRESETS (CP instead of KP) ---
+            // --- UPDATED PRESETS (CP + ICONS) ---
             const presets = [
                 { id: "CP", label: "Closest to Pin", img: "./images/bet_cp.png" },
                 { id: "Drive", label: "Longest Drive", img: "./images/bet_drive.png" },
