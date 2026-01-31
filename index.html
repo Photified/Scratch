@@ -39,12 +39,27 @@
 
         /* CONTENT */
         .content { flex: 1; padding-bottom: 100px; }
-        .hero-card { padding: 40px 20px; text-align: center; background: var(--bg-card); border-bottom: 1px solid var(--border); }
-        .hero-amount { font-family: var(--font-serif); font-size: 64px; font-weight: 700; line-height: 1; margin-top: 8px; }
+        
+        /* HERO CARD (Redesigned with Plus Button) */
+        .hero-card { padding: 32px 24px; background: var(--bg-card); border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
+        .hero-amount { font-family: var(--font-serif); font-size: 56px; font-weight: 700; line-height: 1; margin-top: 4px; }
         .text-green { color: #059669; } .text-red { color: #DC2626; }
-        .feed-list { padding: 0 16px; }
-        .bet-row { display: flex; align-items: center; padding: 16px 0; border-bottom: 1px solid var(--border); }
-        .bet-icon { width: 48px; height: 48px; padding: 8px; background: var(--bg-body); border-radius: 12px; margin-right: 16px; border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; }
+        
+        .add-wager-btn { 
+            width: 56px; height: 56px; border-radius: 50%; background: var(--primary); color: white; border: none; 
+            display: flex; align-items: center; justify-content: center; cursor: pointer; box-shadow: 0 4px 12px rgba(0,89,76,0.3); transition: transform 0.1s;
+        }
+        .add-wager-btn:active { transform: scale(0.95); }
+
+        /* FEED LIST (Boxed Style) */
+        .feed-list { padding: 16px; }
+        .bet-row { 
+            display: flex; align-items: center; padding: 16px; 
+            border: 1px solid var(--border); border-radius: 12px; 
+            margin-bottom: 12px; background: var(--bg-card); 
+            box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+        }
+        .bet-icon { width: 42px; height: 42px; padding: 8px; background: var(--bg-body); border-radius: 10px; margin-right: 14px; border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; }
         .bet-icon img { width: 100%; height: 100%; object-fit: contain; }
         .bet-info { flex: 1; }
         .bet-val { font-family: var(--font-serif); font-size: 18px; font-weight: 700; }
@@ -88,7 +103,6 @@
         .type-card.active .type-img { opacity: 1; }
 
         /* BUTTONS */
-        .fab { position: fixed; bottom: 30px; right: 24px; width: 64px; height: 64px; border-radius: 50%; background: var(--primary); color: white; border: none; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.3); display: flex; align-items: center; justify-content: center; cursor: pointer; z-index: 50; }
         .btn-full { width: 100%; padding: 16px; border-radius: 14px; font-weight: 700; font-size: 16px; cursor: pointer; text-align: center; border: none; transition: opacity 0.2s; }
         .btn-full:disabled { opacity: 0.5; cursor: not-allowed; }
         .btn-primary { background: var(--primary); color: white; }
@@ -106,7 +120,7 @@
         import { getFirestore, collection, addDoc, doc, updateDoc, getDocs, getDoc, setDoc, query, where, orderBy, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
         import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js";
         
-     // Your web app's Firebase configuration
+       // Your web app's Firebase configuration
 const firebaseConfig = {
   apiKey: "AIzaSyBPBps7eOq5gqyT5LuOnUGJkhPumBbZh-w",
   authDomain: "scratch-d0420.firebaseapp.com",
@@ -141,6 +155,7 @@ const firebaseConfig = {
             const [roster, setRoster] = useState([]); 
             const [alertState, setAlertState] = useState({ show: false, title: '', msg: '' });
             const [deferredPrompt, setDeferredPrompt] = useState(null);
+            const [isStandalone, setIsStandalone] = useState(false);
             const [darkMode, setDarkMode] = useState(localStorage.getItem('theme') === 'dark');
 
             // --- THEME & INSTALL ---
@@ -155,6 +170,11 @@ const firebaseConfig = {
             }, [darkMode]);
 
             useEffect(() => {
+                // Check if running in PWA mode
+                if (window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true) {
+                    setIsStandalone(true);
+                }
+
                 window.addEventListener('beforeinstallprompt', (e) => {
                     e.preventDefault();
                     setDeferredPrompt(e);
@@ -304,13 +324,14 @@ const firebaseConfig = {
                         showAppAlert={showAppAlert} 
                         darkMode={darkMode} setDarkMode={setDarkMode}
                         handleInstall={handleInstall}
+                        isStandalone={isStandalone}
                     />
                     <AlertModal />
                 </>
             );
         }
 
-        function MainApp({ user, username, roster, onAddFriend, onRemoveFriend, showAppAlert, darkMode, setDarkMode, handleInstall }) {
+        function MainApp({ user, username, roster, onAddFriend, onRemoveFriend, showAppAlert, darkMode, setDarkMode, handleInstall, isStandalone }) {
             const [view, setView] = useState('ledger'); 
             const [viewFriend, setViewFriend] = useState(null); 
             const [bets, setBets] = useState([]);
@@ -393,11 +414,17 @@ const firebaseConfig = {
                     {!viewFriend && view === 'ledger' && (
                         <div className="content">
                             <div className="hero-card">
-                                <div style={{fontSize:11, fontWeight:800, color:'var(--text-sub)', textTransform:'uppercase'}}>Net Balance</div>
-                                <div className={`hero-amount ${stats >= 0 ? 'text-green' : 'text-red'}`}>
-                                    {stats >= 0 ? '+' : '-'}${Math.abs(stats)}
+                                <div>
+                                    <div style={{fontSize:11, fontWeight:800, color:'var(--text-sub)', textTransform:'uppercase', marginBottom:2}}>Net Balance</div>
+                                    <div className={`hero-amount ${stats >= 0 ? 'text-green' : 'text-red'}`}>
+                                        {stats >= 0 ? '+' : '-'}${Math.abs(stats)}
+                                    </div>
                                 </div>
+                                <button className="add-wager-btn" onClick={() => setModalOpen(true)}>
+                                    <i data-lucide="plus" size="28"></i>
+                                </button>
                             </div>
+                            
                             <div style={{padding:'24px 20px 10px', fontWeight:700, display:'flex', alignItems:'center', gap:8}}>
                                 <i data-lucide="history" size="18"></i> Recent Activity
                             </div>
@@ -428,7 +455,6 @@ const firebaseConfig = {
                                     );
                                 })}
                             </div>
-                            <button className="fab" onClick={() => setModalOpen(true)}><i data-lucide="plus" size="32"></i></button>
                         </div>
                     )}
 
@@ -479,13 +505,15 @@ const firebaseConfig = {
                                 <h4 style={{marginBottom:10}}>How to Play</h4>
                                 <ol style={{paddingLeft:20, color:'var(--text-sub)', fontSize:14, lineHeight:1.6}}>
                                     <li>Add friends in the Clubhouse tab.</li>
-                                    <li>Tap (+) to place a wager.</li>
+                                    <li>Tap (+) on My Ledger to place a wager.</li>
                                     <li>Select winner, amount, and bet type.</li>
                                     <li>Settlements happen on the course.</li>
                                 </ol>
                             </div>
 
-                            <button className="btn-full btn-primary" onClick={handleInstall} style={{marginBottom:12}}>Install App</button>
+                            {!isStandalone && (
+                                <button className="btn-full btn-primary" onClick={handleInstall} style={{marginBottom:12}}>Install App</button>
+                            )}
                             <button className="btn-full" style={{background:'transparent', border:'1px solid #DC2626', color:'#DC2626'}} onClick={() => window.ops.signOut(window.auth)}>Sign Out</button>
                         </div>
                     )}
@@ -499,8 +527,8 @@ const firebaseConfig = {
                                 
                                 return (
                                     <>
-                                        <div className="hero-card">
-                                            <div style={{textAlign:'center', marginBottom:16}}>
+                                        <div className="hero-card" style={{display:'block', textAlign:'center'}}>
+                                            <div style={{marginBottom:16}}>
                                                 {viewFriend.photoURL ? 
                                                     <img src={viewFriend.photoURL} style={{width:64, height:64, borderRadius:'50%', border:'3px solid var(--primary)', objectFit:'cover'}} />
                                                     : <div style={{width:64, height:64, borderRadius:'50%', background:'var(--border)', margin:'0 auto'}}></div>
