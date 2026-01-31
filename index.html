@@ -30,28 +30,28 @@
         .app-container { max-width: 500px; margin: 0 auto; min-height: 100vh; background: var(--bg-card); display: flex; flex-direction: column; box-shadow: 0 0 20px rgba(0,0,0,0.05); }
         
         /* HEADER */
-        .header { background-color: var(--primary); padding: 16px 20px; color: white; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 50; height: 60px; }
-        .brand h1 { font-family: var(--font-serif); font-size: 22px; font-weight: 700; letter-spacing: 0.5px; }
+        .header { background-color: var(--primary); padding: 0 20px; color: white; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 50; height: 60px; }
+        .brand h1 { font-family: var(--font-serif); font-size: 22px; font-weight: 700; letter-spacing: 0.5px; margin: 0; }
         .nav-tabs { display: flex; border-bottom: 1px solid var(--border); background: var(--bg-card); }
         .nav-item { flex: 1; text-align: center; padding: 16px; color: var(--text-sub); font-weight: 600; cursor: pointer; font-size: 14px; position: relative; }
         .nav-item.active { color: var(--primary); }
         .nav-item.active::after { content: ''; position: absolute; bottom: 0; left: 0; right: 0; height: 3px; background: var(--primary); border-radius: 3px 3px 0 0; }
 
         /* CONTENT */
-        .content { flex: 1; padding-bottom: 100px; }
+        .content { flex: 1; padding-bottom: 100px; overflow-y: auto; }
         
-        /* HERO GRID (BOXES) - FIXED ALIGNMENT */
-        .hero-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; padding: 20px; border-bottom: 1px solid var(--border); background: var(--bg-body); }
+        /* HERO GRID - Perfectly Aligned Boxes */
+        .hero-grid { display: flex; gap: 16px; padding: 20px; border-bottom: 1px solid var(--border); background: var(--bg-body); }
         .hero-box { 
+            flex: 1; height: 140px; /* Fixed height for exact alignment */
             background: var(--bg-card); border: 1px solid var(--border); border-radius: 16px; 
             padding: 16px; display: flex; flex-direction: column; align-items: center; justify-content: center; 
-            height: 130px; /* Fixed height for alignment */
             box-shadow: 0 2px 4px rgba(0,0,0,0.03); text-align: center;
         }
-        .box-label { font-size: 11px; fontWeight: 800; color: var(--text-sub); text-transform: uppercase; margin-bottom: 12px; letter-spacing: 0.5px; }
+        .box-label { font-size: 11px; fontWeight: 800; color: var(--text-sub); text-transform: uppercase; margin-bottom: 16px; letter-spacing: 0.5px; }
         .box-val { font-family: var(--font-serif); font-size: 32px; font-weight: 700; line-height: 1; }
         
-        /* PLUS BUTTON IN BOX */
+        /* PLUS BUTTON */
         .plus-btn { 
             width: 48px; height: 48px; border-radius: 50%; background: var(--primary); color: white; 
             display: flex; align-items: center; justify-content: center; 
@@ -78,15 +78,11 @@
         .delete-btn { color: #DC2626; font-size: 18px; cursor: pointer; padding: 8px; margin-left: auto; }
         .add-row { display: flex; gap: 8px; margin-top: 12px; }
         
-        .input-std { padding: 12px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg-card); color: var(--text-main); font-size: 16px; -webkit-appearance: none; }
+        .input-std { padding: 12px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg-card); color: var(--text-main); font-size: 16px; -webkit-appearance: none; flex: 1; }
         .input-lg { font-size: 20px; padding: 16px; text-align: center; border: 2px solid var(--border); }
         .input-lg:focus { border-color: var(--primary); outline: none; }
 
-        /* SLIDER & MODAL */
-        input[type=range] { -webkit-appearance: none; width: 100%; background: transparent; }
-        input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; height: 24px; width: 24px; border-radius: 50%; background: var(--primary); margin-top: -10px; box-shadow: 0 2px 6px rgba(0,0,0,0.2); }
-        input[type=range]::-webkit-slider-runnable-track { width: 100%; height: 4px; background: var(--border); border-radius: 2px; }
-
+        /* MODAL */
         .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.6); backdrop-filter: blur(4px); display: flex; align-items: center; justify-content: center; z-index: 100; }
         .modal-bottom { align-items: flex-end; }
         .modal-content { background: var(--bg-card); width: 100%; max-width: 450px; border-radius: 24px; padding: 24px; max-height: 90vh; overflow-y: auto; box-shadow: 0 10px 40px rgba(0,0,0,0.2); }
@@ -121,7 +117,8 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
         import { getFirestore, collection, addDoc, doc, updateDoc, getDocs, getDoc, setDoc, query, where, orderBy, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
         import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js";
-     // Your web app's Firebase configuration
+        
+    // Your web app's Firebase configuration
 const firebaseConfig = {
   apiKey: "AIzaSyBPBps7eOq5gqyT5LuOnUGJkhPumBbZh-w",
   authDomain: "scratch-d0420.firebaseapp.com",
@@ -159,6 +156,7 @@ const firebaseConfig = {
             const [isStandalone, setIsStandalone] = useState(false);
             const [darkMode, setDarkMode] = useState(localStorage.getItem('theme') === 'dark');
 
+            // --- THEME & INSTALL ---
             useEffect(() => {
                 if (darkMode) {
                     document.body.classList.add('dark-mode');
@@ -179,6 +177,7 @@ const firebaseConfig = {
                 });
             }, []);
 
+            // --- AUTH ---
             useEffect(() => {
                 setGlobalAlert = setAlertState; 
                 const timer = setTimeout(() => {
@@ -247,6 +246,7 @@ const firebaseConfig = {
                 } catch(e) { setIsSavingUser(false); showAppAlert("Error", "Could not save."); }
             };
 
+            // --- BIDIRECTIONAL FRIEND ADDING ---
             const addFriend = async (friendUsername) => {
                 const cleanName = friendUsername.trim().toLowerCase().replace('@', '');
                 
@@ -286,11 +286,11 @@ const firebaseConfig = {
                     };
 
                     const friendRef = window.ops.doc(window.db, "users", friendDoc.id);
-                    // We need to read their roster first to append, or use arrayUnion. 
-                    // Using array-modify pattern for simplicity with current structure.
+                    // We grab their doc again to be safe
                     const friendSnap = await window.ops.getDoc(friendRef);
                     if(friendSnap.exists()) {
                         const theirRoster = friendSnap.data().roster || [];
+                        // Only add me if I'm not already there
                         if(!theirRoster.some(r => r.username === username)) {
                             const theirNewRoster = [...theirRoster, meForFriend];
                             await window.ops.updateDoc(friendRef, { roster: theirNewRoster });
@@ -362,13 +362,18 @@ const firebaseConfig = {
             );
         }
 
+        // --- MAIN APP COMPONENT ---
         function MainApp({ user, username, roster, onAddFriend, onRemoveFriend, showAppAlert, darkMode, setDarkMode, handleInstall, isStandalone }) {
-            const [view, setView] = useState('ledger'); 
-            const [lastView, setLastView] = useState('ledger'); 
-            const [viewFriend, setViewFriend] = useState(null); 
+            // View State: 'ledger', 'clubhouse', 'settings', 'friend'
+            const [view, setView] = useState('ledger');
+            const [lastView, setLastView] = useState('ledger'); // To return from settings
+            
+            // Data States
+            const [activeFriend, setActiveFriend] = useState(null); 
             const [bets, setBets] = useState([]);
             const [modalOpen, setModalOpen] = useState(false);
 
+            // Fetch Bets
             useEffect(() => {
                 const q = window.ops.query(
                     window.ops.collection(window.db, "bets"), 
@@ -382,6 +387,7 @@ const firebaseConfig = {
                 });
             }, [user]);
 
+            // Stats Helper
             const getStats = (betList) => {
                 let balance = 0;
                 betList.forEach(b => {
@@ -420,48 +426,68 @@ const firebaseConfig = {
                 }
             };
 
-            const goSettings = () => {
+            // Navigation
+            const goToSettings = () => {
                 setLastView(view);
-                setViewFriend(null); // Fix blank screen
                 setView('settings');
             };
+            
             const goBack = () => {
-                if(view === 'settings') setView(lastView);
-                else if(viewFriend) setViewFriend(null);
+                if (view === 'settings') {
+                    setView(lastView === 'settings' ? 'ledger' : lastView);
+                } else if (view === 'friend') {
+                    setView('clubhouse');
+                    setActiveFriend(null);
+                }
+            };
+
+            const openFriend = (friend) => {
+                setActiveFriend(friend);
+                setView('friend');
+            };
+
+            // --- RENDERERS ---
+
+            const renderHeader = () => (
+                <header className="header">
+                    {view === 'settings' ? (
+                        <>
+                            <div className="icon-btn" onClick={goBack}><i data-lucide="arrow-left" color="white"></i></div>
+                            <div className="brand">Settings</div>
+                            <div style={{width:40}}></div>
+                        </>
+                    ) : view === 'friend' ? (
+                        <>
+                            <div className="icon-btn" onClick={goBack}><i data-lucide="arrow-left" color="white"></i></div>
+                            <div className="brand">{activeFriend ? activeFriend.name : 'Friend'}</div>
+                            <div style={{width:40}}></div>
+                        </>
+                    ) : (
+                        <>
+                            <div className="brand">Scratch</div>
+                            <div className="icon-btn" onClick={goToSettings}><i data-lucide="settings" color="white"></i></div>
+                        </>
+                    )}
+                </header>
+            );
+
+            const renderTabs = () => {
+                if (view === 'settings' || view === 'friend') return null;
+                return (
+                    <div className="nav-tabs">
+                        <div className={`nav-item ${view === 'ledger' ? 'active' : ''}`} onClick={() => setView('ledger')}>My Ledger</div>
+                        <div className={`nav-item ${view === 'clubhouse' ? 'active' : ''}`} onClick={() => setView('clubhouse')}>Clubhouse</div>
+                    </div>
+                );
             };
 
             return (
                 <div className="app-container">
-                    <header className="header">
-                        {view === 'settings' ? (
-                            <>
-                                <div className="icon-btn" onClick={goBack}><i data-lucide="arrow-left" color="white"></i></div>
-                                <div className="brand">Settings</div>
-                                <div style={{width:40}}></div>
-                            </>
-                        ) : viewFriend ? (
-                            <>
-                                <div className="icon-btn" onClick={() => setViewFriend(null)}><i data-lucide="arrow-left" color="white"></i></div>
-                                <div className="brand">{viewFriend.name}</div>
-                                <div style={{width:40}}></div>
-                            </>
-                        ) : (
-                            <>
-                                <div className="brand">Scratch</div>
-                                <div className="icon-btn" onClick={goSettings}><i data-lucide="settings" color="white"></i></div>
-                            </>
-                        )}
-                    </header>
+                    {renderHeader()}
+                    {renderTabs()}
 
-                    {view !== 'settings' && !viewFriend && (
-                        <div className="nav-tabs">
-                            <div className={`nav-item ${view === 'ledger' ? 'active' : ''}`} onClick={() => setView('ledger')}>My Ledger</div>
-                            <div className={`nav-item ${view === 'clubhouse' ? 'active' : ''}`} onClick={() => setView('clubhouse')}>Clubhouse</div>
-                        </div>
-                    )}
-
-                    {/* --- MY LEDGER --- */}
-                    {!viewFriend && view === 'ledger' && (
+                    {/* --- 1. MY LEDGER --- */}
+                    {view === 'ledger' && (
                         <div className="content">
                             <div className="hero-grid">
                                 <div className="hero-box">
@@ -480,53 +506,45 @@ const firebaseConfig = {
                                 <i data-lucide="history" size="18"></i> Recent Activity
                             </div>
                             <div className="feed-list">
-                                {bets.map(bet => {
-                                    const iWon = bet.winnerEmail === user.email;
-                                    const context = getBetContext(bet);
-                                    return (
-                                        <div key={bet.id} className="bet-row">
-                                            <div className="bet-icon">
-                                                {bet.img ? <img src={bet.img} onError={(e)=>{e.target.style.display='none'}} /> : <i data-lucide="trophy" color="var(--primary)" style={{marginTop:6}}></i>}
-                                            </div>
-                                            <div className="bet-info">
-                                                <div style={{fontWeight:600, fontSize:16}}>{bet.type}</div>
-                                                <div style={{fontSize:13, color:'var(--text-sub)'}}>
-                                                    {iWon ? 'You won' : 'You lost'} <strong style={{color:'var(--text-main)'}}>{context}</strong>
-                                                </div>
-                                                {(bet.course || bet.hole) && (
-                                                    <div style={{fontSize:11, color:'var(--primary)', marginTop:2, fontWeight:500}}>
-                                                        {bet.hole ? `Hole ${bet.hole}` : ''} {bet.hole && bet.course ? '•' : ''} {bet.course}
-                                                    </div>
-                                                )}
-                                            </div>
-                                            <div className={`bet-val ${iWon ? 'text-green' : 'text-red'}`}>
-                                                {iWon ? '+' : '-'}${bet.amount}
-                                            </div>
+                                {bets.map(bet => (
+                                    <div key={bet.id} className="bet-row">
+                                        <div className="bet-icon">
+                                            {bet.img ? <img src={bet.img} onError={(e)=>{e.target.style.display='none'}} /> : <i data-lucide="trophy" color="var(--primary)"></i>}
                                         </div>
-                                    );
-                                })}
+                                        <div className="bet-info">
+                                            <div style={{fontWeight:600}}>{bet.type}</div>
+                                            <div style={{fontSize:13, color:'var(--text-sub)'}}>
+                                                {bet.winnerEmail === user.email ? 'You won' : 'You lost'} <strong>{getBetContext(bet)}</strong>
+                                            </div>
+                                            {(bet.course || bet.hole) && <div style={{fontSize:11, color:'var(--primary)', marginTop:2, fontWeight:500}}>{bet.hole ? `Hole ${bet.hole}` : ''} {bet.hole && bet.course ? '•' : ''} {bet.course}</div>}
+                                        </div>
+                                        <div className={`bet-val ${bet.winnerEmail === user.email ? 'text-green' : 'text-red'}`}>
+                                            {bet.winnerEmail === user.email ? '+' : '-'}${bet.amount}
+                                        </div>
+                                    </div>
+                                ))}
                             </div>
                         </div>
                     )}
 
-                    {/* --- CLUBHOUSE --- */}
-                    {!viewFriend && view === 'clubhouse' && (
+                    {/* --- 2. CLUBHOUSE --- */}
+                    {view === 'clubhouse' && (
                         <div className="content settings-view">
                             <div className="section-label">MY FRIENDS</div>
                             <div className="settings-card">
                                 {roster.length === 0 && <div style={{padding:10, color:'#999', fontSize:13}}>No friends added yet.</div>}
                                 {roster.map((friend, i) => (
-                                    <div key={i} className="roster-item" onClick={() => setViewFriend(friend)}>
+                                    <div key={i} className="roster-item" onClick={() => openFriend(friend)}>
                                         <img src={friend.photoURL || './images/logo192.png'} className="roster-avatar" onError={(e) => e.target.style.opacity=0.5} />
                                         <div>
-                                            <span style={{fontWeight:600, display:'block'}}>{friend.name} <i data-lucide="chevron-right" size="14" style={{verticalAlign:'middle', marginLeft:4, opacity:0.3}}></i></span>
+                                            <span style={{fontWeight:600, display:'block'}}>{friend.name} <i data-lucide="chevron-right" size="14" style={{opacity:0.3, verticalAlign:'middle'}}></i></span>
                                             <span style={{fontSize:12, color:'var(--primary)'}}>@{friend.username}</span>
                                         </div>
                                         <div className="delete-btn" onClick={(e) => { e.stopPropagation(); onRemoveFriend(friend.email); }}>×</div>
                                     </div>
                                 ))}
                                 <div className="add-row">
-                                    <input id="newFriendUser" className="input-std" style={{flex:1}} placeholder="Search Username..." />
+                                    <input id="newFriendUser" className="input-std" placeholder="Search Username..." />
                                     <button className="btn-primary" style={{borderRadius:8, padding:'0 16px', border:'none', cursor:'pointer'}} onClick={() => {
                                         const val = document.getElementById('newFriendUser').value;
                                         if(val) { onAddFriend(val); document.getElementById('newFriendUser').value = ''; }
@@ -536,7 +554,7 @@ const firebaseConfig = {
                         </div>
                     )}
 
-                    {/* --- SETTINGS --- */}
+                    {/* --- 3. SETTINGS --- */}
                     {view === 'settings' && (
                         <div className="content settings-view">
                             <div style={{textAlign:'center', marginBottom:30}}>
@@ -569,19 +587,19 @@ const firebaseConfig = {
                         </div>
                     )}
 
-                    {/* --- FRIEND PROFILE --- */}
-                    {viewFriend && (
+                    {/* --- 4. FRIEND PROFILE --- */}
+                    {view === 'friend' && activeFriend && (
                         <div className="content">
                             {(() => {
-                                const friendBets = bets.filter(b => b.participants && b.participants.includes(viewFriend.email));
+                                const friendBets = bets.filter(b => b.participants && b.participants.includes(activeFriend.email));
                                 const friendBalance = getStats(friendBets);
                                 return (
                                     <>
-                                        <div className="hero-card" style={{display:'block', textAlign:'center', height:'auto'}}>
+                                        <div className="hero-box" style={{height:'auto', border:'none', boxShadow:'none', background:'transparent', marginBottom:0, paddingBottom:0}}>
                                             <div style={{marginBottom:16}}>
-                                                <img src={viewFriend.photoURL || './images/logo192.png'} style={{width:64, height:64, borderRadius:'50%', border:'3px solid var(--primary)', objectFit:'cover'}} />
-                                                <h2 style={{marginTop:8, fontSize:22}}>{viewFriend.name}</h2>
-                                                <div style={{fontSize:14, color:'var(--text-sub)', fontWeight:'bold'}}>@{viewFriend.username}</div>
+                                                <img src={activeFriend.photoURL || './images/logo192.png'} style={{width:80, height:80, borderRadius:'50%', border:'3px solid var(--primary)', objectFit:'cover'}} />
+                                                <h2 style={{marginTop:8, fontSize:24}}>{activeFriend.name}</h2>
+                                                <div style={{fontSize:14, color:'var(--text-sub)', fontWeight:'bold'}}>@{activeFriend.username}</div>
                                             </div>
                                             <div style={{fontSize:11, fontWeight:800, color:'var(--text-sub)', textTransform:'uppercase'}}>Net vs You</div>
                                             <div className={`hero-amount ${friendBalance >= 0 ? 'text-green' : 'text-red'}`}>
@@ -589,34 +607,27 @@ const firebaseConfig = {
                                             </div>
                                         </div>
                                         <div style={{padding:'24px 20px 10px', fontWeight:700, display:'flex', alignItems:'center', gap:8}}>
-                                            <i data-lucide="history" size="18"></i> History vs {viewFriend.name}
+                                            <i data-lucide="history" size="18"></i> History vs {activeFriend.name}
                                         </div>
                                         <div className="feed-list">
                                             {friendBets.length === 0 && <div style={{padding:20, color:'#999', textAlign:'center'}}>No bets recorded yet.</div>}
-                                            {friendBets.map(bet => {
-                                                const iWon = bet.winnerEmail === user.email;
-                                                return (
-                                                    <div key={bet.id} className="bet-row">
-                                                        <div className="bet-icon">
-                                                            {bet.img ? <img src={bet.img} onError={(e)=>{e.target.style.display='none'}} /> : <i data-lucide="trophy" color="var(--primary)" style={{marginTop:6}}></i>}
-                                                        </div>
-                                                        <div className="bet-info">
-                                                            <div style={{fontWeight:600, fontSize:16}}>{bet.type}</div>
-                                                            <div style={{fontSize:13, color:'var(--text-sub)'}}>
-                                                                {iWon ? 'You won' : `${viewFriend.name} won`}
-                                                            </div>
-                                                            {(bet.course || bet.hole) && (
-                                                                <div style={{fontSize:11, color:'var(--primary)', marginTop:2, fontWeight:500}}>
-                                                                    {bet.hole ? `Hole ${bet.hole}` : ''} {bet.hole && bet.course ? '•' : ''} {bet.course}
-                                                                </div>
-                                                            )}
-                                                        </div>
-                                                        <div className={`bet-val ${iWon ? 'text-green' : 'text-red'}`}>
-                                                            {iWon ? '+' : '-'}${bet.amount}
-                                                        </div>
+                                            {friendBets.map(bet => (
+                                                <div key={bet.id} className="bet-row">
+                                                    <div className="bet-icon">
+                                                        {bet.img ? <img src={bet.img} onError={(e)=>{e.target.style.display='none'}} /> : <i data-lucide="trophy" color="var(--primary)"></i>}
                                                     </div>
-                                                );
-                                            })}
+                                                    <div className="bet-info">
+                                                        <div style={{fontWeight:600}}>{bet.type}</div>
+                                                        <div style={{fontSize:13, color:'var(--text-sub)'}}>
+                                                            {bet.winnerEmail === user.email ? 'You won' : `${activeFriend.name} won`}
+                                                        </div>
+                                                        {(bet.course || bet.hole) && <div style={{fontSize:11, color:'var(--primary)', marginTop:2, fontWeight:500}}>{bet.hole ? `Hole ${bet.hole}` : ''} {bet.hole && bet.course ? '•' : ''} {bet.course}</div>}
+                                                    </div>
+                                                    <div className={`bet-val ${bet.winnerEmail === user.email ? 'text-green' : 'text-red'}`}>
+                                                        {bet.winnerEmail === user.email ? '+' : '-'}${bet.amount}
+                                                    </div>
+                                                </div>
+                                            ))}
                                         </div>
                                     </>
                                 );
@@ -686,7 +697,6 @@ const firebaseConfig = {
                             <div onClick={onClose} style={{cursor:'pointer'}}><i data-lucide="x"></i></div>
                         </div>
 
-                        {/* COURSE & HOLE */}
                         <div style={{background:'var(--bg-body)', padding:16, borderRadius:12, marginBottom:24}}>
                             <div className="section-label">LOCATION</div>
                             <div style={{display:'flex', gap:10, alignItems:'center', marginBottom:10}}>
