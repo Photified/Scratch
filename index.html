@@ -52,9 +52,10 @@
         /* SETTINGS & ROSTER */
         .settings-view { padding: 24px; }
         .settings-card { background: var(--bg-body); border-radius: 12px; border: 1px solid var(--border); padding: 16px; margin-bottom: 24px; }
-        .roster-item { display: flex; justify-content: space-between; align-items: center; padding: 16px 0; border-bottom: 1px solid rgba(0,0,0,0.05); cursor: pointer; }
+        .roster-item { display: flex; align-items: center; padding: 12px 0; border-bottom: 1px solid rgba(0,0,0,0.05); cursor: pointer; }
         .roster-item:active { opacity: 0.6; }
-        .delete-btn { color: #DC2626; font-size: 18px; cursor: pointer; padding: 8px; }
+        .roster-avatar { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; margin-right: 12px; border: 2px solid var(--border); }
+        .delete-btn { color: #DC2626; font-size: 18px; cursor: pointer; padding: 8px; margin-left: auto; }
         .add-row { display: flex; gap: 8px; margin-top: 12px; }
         
         .input-std { padding: 12px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg-card); color: var(--text-main); font-size: 16px; -webkit-appearance: none; }
@@ -113,6 +114,7 @@ const firebaseConfig = {
 };
 
 // Initialize Firebase
+
         const firebaseApp = initializeApp(firebaseConfig);
         window.db = getFirestore(firebaseApp);
         window.auth = getAuth(firebaseApp);
@@ -150,14 +152,21 @@ const firebaseConfig = {
                             const userRef = window.ops.doc(window.db, "users", u.uid);
                             const docSnap = await window.ops.getDoc(userRef);
                             
+                            // SAVE PHOTO URL ON LOGIN
                             if (docSnap.exists()) {
                                 const data = docSnap.data();
                                 if (data.username) {
                                     setUsername(data.username);
                                     if(data.roster) setRoster(data.roster);
                                 }
+                                // Update photo if changed
+                                await window.ops.updateDoc(userRef, { photoURL: u.photoURL });
                             } else {
-                                await window.ops.setDoc(userRef, { email: u.email, displayName: u.displayName }, { merge: true });
+                                await window.ops.setDoc(userRef, { 
+                                    email: u.email, 
+                                    displayName: u.displayName,
+                                    photoURL: u.photoURL 
+                                }, { merge: true });
                             }
                         } catch (e) { console.log("Error", e); }
                     }
@@ -209,14 +218,19 @@ const firebaseConfig = {
                 const friendData = snap.docs[0].data();
                 if(friendData.email === user.email) return showAppAlert("Error", "You can't add yourself!");
 
-                const newFriend = { name: friendData.displayName || cleanName, email: friendData.email, username: cleanName };
-                if(roster.some(r => r.username === cleanName)) return showAppAlert("Exists", "User already in your roster.");
+                const newFriend = { 
+                    name: friendData.displayName || cleanName, 
+                    email: friendData.email, 
+                    username: cleanName,
+                    photoURL: friendData.photoURL // STORE AVATAR
+                };
+                if(roster.some(r => r.username === cleanName)) return showAppAlert("Exists", "User already in your clubhouse.");
 
                 const newRoster = [...roster, newFriend];
                 setRoster(newRoster);
                 const userRef = window.ops.doc(window.db, "users", user.uid);
                 await window.ops.updateDoc(userRef, { roster: newRoster });
-                showAppAlert("Success", "Added @" + cleanName + " to your roster!");
+                showAppAlert("Success", "Added @" + cleanName + " to your clubhouse!");
             };
 
             const removeFriend = async (friendEmail) => {
@@ -290,8 +304,7 @@ const firebaseConfig = {
 
         function MainApp({ user, username, roster, onAddFriend, onRemoveFriend, showAppAlert }) {
             const [view, setView] = useState('ledger'); 
-            // New state for Friend Profile View
-            const [viewFriend, setViewFriend] = useState(null); // Stores the friend object {name, email, username}
+            const [viewFriend, setViewFriend] = useState(null); 
             const [bets, setBets] = useState([]);
             const [modalOpen, setModalOpen] = useState(false);
 
@@ -331,23 +344,17 @@ const firebaseConfig = {
                 } catch (e) { showAppAlert("Error", e.message); }
             };
 
-            // --- HELPER TO GET OPPONENT NAME ---
             const getBetContext = (bet) => {
                 const iWon = bet.winnerEmail === user.email;
                 if (iWon) {
-                    // Find loser name. In 1v1, it's the other person.
-                    // We don't store loserName explicitly in DB, so we look in roster or use logic.
-                    // But we DO have participant emails.
                     const opponents = bet.participants.filter(e => e !== user.email);
                     if (opponents.length === 1) {
-                        // Try to find name in Roster
                         const friend = roster.find(r => r.email === opponents[0]);
                         return `vs ${friend ? friend.name : 'Opponent'}`;
                     } else {
                         return `vs ${opponents.length} others`;
                     }
                 } else {
-                    // I lost.
                     return `vs ${bet.winnerName || 'Opponent'}`;
                 }
             };
@@ -369,12 +376,12 @@ const firebaseConfig = {
 
                     {!viewFriend && (
                         <div className="nav-tabs">
-                            <div className={`nav-item ${view === 'ledger' ? 'active' : ''}`} onClick={() => setView('ledger')}>Ledger</div>
-                            <div className={`nav-item ${view === 'settings' ? 'active' : ''}`} onClick={() => setView('settings')}>Roster</div>
+                            <div className={`nav-item ${view === 'ledger' ? 'active' : ''}`} onClick={() => setView('ledger')}>My Ledger</div>
+                            <div className={`nav-item ${view === 'settings' ? 'active' : ''}`} onClick={() => setView('settings')}>Clubhouse</div>
                         </div>
                     )}
 
-                    {/* --- MAIN LEDGER --- */}
+                    {/* --- MY LEDGER --- */}
                     {!viewFriend && view === 'ledger' && (
                         <div className="content">
                             <div className="hero-card">
@@ -420,7 +427,6 @@ const firebaseConfig = {
                     {/* --- FRIEND PROFILE VIEW --- */}
                     {viewFriend && (
                         <div className="content">
-                            {/* Filter bets for this friend */}
                             {(() => {
                                 const friendBets = bets.filter(b => b.participants && b.participants.includes(viewFriend.email));
                                 const friendBalance = getStats(friendBets);
@@ -428,11 +434,18 @@ const firebaseConfig = {
                                 return (
                                     <>
                                         <div className="hero-card">
-                                            <div style={{fontSize:11, fontWeight:800, color:'var(--text-sub)', textTransform:'uppercase'}}>Vs {viewFriend.name}</div>
+                                            <div style={{textAlign:'center', marginBottom:16}}>
+                                                {viewFriend.photoURL ? 
+                                                    <img src={viewFriend.photoURL} style={{width:64, height:64, borderRadius:'50%', border:'3px solid var(--primary)', objectFit:'cover'}} />
+                                                    : <div style={{width:64, height:64, borderRadius:'50%', background:'var(--border)', margin:'0 auto'}}></div>
+                                                }
+                                                <h2 style={{marginTop:8, fontSize:22}}>{viewFriend.name}</h2>
+                                                <div style={{fontSize:14, color:'var(--text-sub)', fontWeight:'bold'}}>@{viewFriend.username}</div>
+                                            </div>
+                                            <div style={{fontSize:11, fontWeight:800, color:'var(--text-sub)', textTransform:'uppercase'}}>Net vs You</div>
                                             <div className={`hero-amount ${friendBalance >= 0 ? 'text-green' : 'text-red'}`}>
                                                 {friendBalance >= 0 ? '+' : '-'}${Math.abs(friendBalance)}
                                             </div>
-                                            <div style={{marginTop:8, fontSize:14, color:'var(--text-sub)'}}>@{viewFriend.username}</div>
                                         </div>
                                         <div style={{padding:'24px 20px 10px', fontWeight:700, display:'flex', alignItems:'center', gap:8}}>
                                             <i data-lucide="history" size="18"></i> History vs {viewFriend.name}
@@ -470,7 +483,7 @@ const firebaseConfig = {
                         </div>
                     )}
 
-                    {/* --- SETTINGS / ROSTER --- */}
+                    {/* --- CLUBHOUSE (FRIENDS) --- */}
                     {!viewFriend && view === 'settings' && (
                         <div className="settings-view">
                             <div style={{textAlign:'center', marginBottom:30}}>
@@ -478,11 +491,12 @@ const firebaseConfig = {
                                 <h2>{user.displayName}</h2>
                                 <p style={{fontSize:14, fontWeight:'bold', color:'var(--primary)'}}>@{username}</p>
                             </div>
-                            <div className="section-label">MY ROSTER</div>
+                            <div className="section-label">MY FRIENDS</div>
                             <div className="settings-card">
                                 {roster.length === 0 && <div style={{padding:10, color:'#999', fontSize:13}}>No friends added yet.</div>}
                                 {roster.map((friend, i) => (
                                     <div key={i} className="roster-item" onClick={() => setViewFriend(friend)}>
+                                        <img src={friend.photoURL || './images/logo192.png'} className="roster-avatar" onError={(e) => e.target.style.opacity=0.5} />
                                         <div>
                                             <span style={{fontWeight:600, display:'block'}}>{friend.name} <i data-lucide="chevron-right" size="14" style={{verticalAlign:'middle', marginLeft:4, opacity:0.3}}></i></span>
                                             <span style={{fontSize:12, color:'var(--primary)'}}>@{friend.username}</span>
