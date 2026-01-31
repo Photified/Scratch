@@ -32,7 +32,9 @@
         /* HEADER & BRANDING */
         .header { background-color: var(--primary); padding: 0 20px; color: white; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 50; height: 60px; }
         .brand h1 { font-family: var(--font-serif); font-size: 22px; font-weight: 700; letter-spacing: 0.5px; margin: 0; }
-        .brand-logo { height: 36px; width: auto; object-fit: contain; }
+        
+        /* Updated Logo Class for Safety */
+        .brand-logo { height: 36px; width: auto; object-fit: contain; max-width: 80vw; }
 
         /* TABS */
         .nav-tabs { display: flex; border-top: 1px solid var(--border); background: var(--bg-card); position: sticky; bottom: 0; padding-bottom: env(safe-area-inset-bottom); z-index: 40; }
