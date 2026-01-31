@@ -29,11 +29,11 @@
         body { background-color: var(--bg-body); color: var(--text-main); font-family: var(--font-sans); transition: background 0.3s; }
         .app-container { max-width: 500px; margin: 0 auto; min-height: 100vh; background: var(--bg-card); display: flex; flex-direction: column; box-shadow: 0 0 20px rgba(0,0,0,0.05); }
         
-        /* HEADER */
+        /* HEADER & TABS */
         .header { background-color: var(--primary); padding: 16px 20px; color: white; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 10; }
         .brand h1 { font-family: var(--font-serif); font-size: 22px; font-weight: 700; letter-spacing: 0.5px; }
         .nav-tabs { display: flex; border-bottom: 1px solid var(--border); background: var(--bg-card); }
-        .nav-item { flex: 1; text-align: center; padding: 16px; color: var(--text-sub); font-weight: 600; cursor: pointer; font-size: 14px; position: relative; }
+        .nav-item { flex: 1; text-align: center; padding: 16px; color: var(--text-sub); font-weight: 600; cursor: pointer; font-size: 13px; position: relative; }
         .nav-item.active { color: var(--primary); }
         .nav-item.active::after { content: ''; position: absolute; bottom: 0; left: 0; right: 0; height: 3px; background: var(--primary); border-radius: 3px 3px 0 0; }
 
@@ -49,9 +49,12 @@
         .bet-info { flex: 1; }
         .bet-val { font-family: var(--font-serif); font-size: 18px; font-weight: 700; }
 
-        /* SETTINGS & ROSTER */
+        /* CLUBHOUSE & SETTINGS */
         .settings-view { padding: 24px; }
         .settings-card { background: var(--bg-body); border-radius: 12px; border: 1px solid var(--border); padding: 16px; margin-bottom: 24px; }
+        .settings-row { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid rgba(0,0,0,0.05); }
+        .settings-row:last-child { border-bottom: none; }
+        
         .roster-item { display: flex; align-items: center; padding: 12px 0; border-bottom: 1px solid rgba(0,0,0,0.05); cursor: pointer; }
         .roster-item:active { opacity: 0.6; }
         .roster-avatar { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; margin-right: 12px; border: 2px solid var(--border); }
@@ -103,7 +106,7 @@
         import { getFirestore, collection, addDoc, doc, updateDoc, getDocs, getDoc, setDoc, query, where, orderBy, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
         import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js";
         
-       // Your web app's Firebase configuration
+     // Your web app's Firebase configuration
 const firebaseConfig = {
   apiKey: "AIzaSyBPBps7eOq5gqyT5LuOnUGJkhPumBbZh-w",
   authDomain: "scratch-d0420.firebaseapp.com",
@@ -137,7 +140,28 @@ const firebaseConfig = {
             const [loading, setLoading] = useState(true);
             const [roster, setRoster] = useState([]); 
             const [alertState, setAlertState] = useState({ show: false, title: '', msg: '' });
+            const [deferredPrompt, setDeferredPrompt] = useState(null);
+            const [darkMode, setDarkMode] = useState(localStorage.getItem('theme') === 'dark');
 
+            // --- THEME & INSTALL ---
+            useEffect(() => {
+                if (darkMode) {
+                    document.body.classList.add('dark-mode');
+                    localStorage.setItem('theme', 'dark');
+                } else {
+                    document.body.classList.remove('dark-mode');
+                    localStorage.setItem('theme', 'light');
+                }
+            }, [darkMode]);
+
+            useEffect(() => {
+                window.addEventListener('beforeinstallprompt', (e) => {
+                    e.preventDefault();
+                    setDeferredPrompt(e);
+                });
+            }, []);
+
+            // --- AUTH ---
             useEffect(() => {
                 setGlobalAlert = setAlertState; 
                 const timer = setTimeout(() => {
@@ -152,14 +176,12 @@ const firebaseConfig = {
                             const userRef = window.ops.doc(window.db, "users", u.uid);
                             const docSnap = await window.ops.getDoc(userRef);
                             
-                            // SAVE PHOTO URL ON LOGIN
                             if (docSnap.exists()) {
                                 const data = docSnap.data();
                                 if (data.username) {
                                     setUsername(data.username);
                                     if(data.roster) setRoster(data.roster);
                                 }
-                                // Update photo if changed
                                 await window.ops.updateDoc(userRef, { photoURL: u.photoURL });
                             } else {
                                 await window.ops.setDoc(userRef, { 
@@ -181,31 +203,31 @@ const firebaseConfig = {
                 try { await window.ops.signInWithPopup(window.auth, window.provider); } catch (e) { showAppAlert("Login Error", e.message); }
             };
 
+            const handleInstall = () => {
+                if (deferredPrompt) {
+                    deferredPrompt.prompt();
+                    deferredPrompt.userChoice.then((result) => {
+                        if (result.outcome === 'accepted') setDeferredPrompt(null);
+                    });
+                } else {
+                    showAppAlert("Install", "To install: Tap the Share/Menu button in your browser, then 'Add to Home Screen'.");
+                }
+            };
+
             const [isSavingUser, setIsSavingUser] = useState(false);
             const handleSetUsername = async (newUsername) => {
                 if(isSavingUser) return; 
                 const cleanName = newUsername.trim().toLowerCase().replace(/\s+/g, '');
-                
                 if (cleanName.length < 3) return showAppAlert("Invalid", "Username must be at least 3 characters.");
-                
                 setIsSavingUser(true); 
-
                 try {
                     const q = window.ops.query(window.ops.collection(window.db, "users"), window.ops.where("username", "==", cleanName));
                     const snap = await window.ops.getDocs(q);
-                    
-                    if (!snap.empty) {
-                        setIsSavingUser(false);
-                        return showAppAlert("Taken", "That username is already taken. Try another.");
-                    }
-
+                    if (!snap.empty) { setIsSavingUser(false); return showAppAlert("Taken", "That username is already taken. Try another."); }
                     const userRef = window.ops.doc(window.db, "users", user.uid);
                     await window.ops.setDoc(userRef, { username: cleanName }, { merge: true });
                     setUsername(cleanName); 
-                } catch(e) {
-                    setIsSavingUser(false);
-                    showAppAlert("Database Error", "Could not save. Check your Firestore Rules.");
-                }
+                } catch(e) { setIsSavingUser(false); showAppAlert("Error", "Could not save."); }
             };
 
             const addFriend = async (friendUsername) => {
@@ -214,18 +236,15 @@ const firebaseConfig = {
                 const snap = await window.ops.getDocs(q);
                 
                 if (snap.empty) return showAppAlert("Not Found", "User @" + cleanName + " not found.");
-
                 const friendData = snap.docs[0].data();
                 if(friendData.email === user.email) return showAppAlert("Error", "You can't add yourself!");
-
                 const newFriend = { 
                     name: friendData.displayName || cleanName, 
                     email: friendData.email, 
                     username: cleanName,
-                    photoURL: friendData.photoURL // STORE AVATAR
+                    photoURL: friendData.photoURL
                 };
                 if(roster.some(r => r.username === cleanName)) return showAppAlert("Exists", "User already in your clubhouse.");
-
                 const newRoster = [...roster, newFriend];
                 setRoster(newRoster);
                 const userRef = window.ops.doc(window.db, "users", user.uid);
@@ -253,56 +272,45 @@ const firebaseConfig = {
                 ) : null
             );
 
-            if (loading) return (
+            if (loading) return <div className="login-screen" style={{justifyContent: 'center', paddingTop: 0}}><div>Loading...</div><div id="loading-tip" className="loading-tip">Taking a long time? <br/>Disable AdBlocker or try Incognito.</div></div>;
+
+            if (!user) return (
                 <div className="login-screen" style={{justifyContent: 'center', paddingTop: 0}}>
-                    <div>Loading...</div>
-                    <div id="loading-tip" className="loading-tip">Taking a long time? <br/>Disable AdBlocker or try Incognito.</div>
+                    <img src="./images/logo192.png" style={{width:80, borderRadius:16, marginBottom:20}} onError={(e)=>e.target.style.display='none'}/>
+                    <h1 style={{fontFamily:'Times New Roman', fontSize:48}}>Scratch</h1>
+                    <p style={{opacity:0.6, letterSpacing:2, fontSize:12, marginBottom:40}}>THE GENTLEMEN'S LEDGER</p>
+                    <button className="btn-full" style={{background:'white', color:'var(--primary)', maxWidth:280, boxShadow:'0 10px 30px rgba(0,0,0,0.1)'}} onClick={handleLogin}>Sign in with Google</button>
+                    <AlertModal />
                 </div>
             );
 
-            if (!user) {
-                return (
-                    <div className="login-screen" style={{justifyContent: 'center', paddingTop: 0}}>
-                        <img src="./images/logo192.png" style={{width:80, borderRadius:16, marginBottom:20}} onError={(e)=>e.target.style.display='none'}/>
-                        <h1 style={{fontFamily:'Times New Roman', fontSize:48}}>Scratch</h1>
-                        <p style={{opacity:0.6, letterSpacing:2, fontSize:12, marginBottom:40}}>THE GENTLEMEN'S LEDGER</p>
-                        <button className="btn-full" style={{background:'white', color:'var(--primary)', maxWidth:280, boxShadow:'0 10px 30px rgba(0,0,0,0.1)'}} onClick={handleLogin}>
-                            Sign in with Google
-                        </button>
-                        <AlertModal />
-                    </div>
-                );
-            }
-
-            if (!username) {
-                return (
-                    <div className="login-screen">
-                        <img src="./images/logo192.png" style={{width: 80, borderRadius: 16, marginBottom: 24, boxShadow: '0 4px 12px rgba(0,0,0,0.1)'}} />
-                        <div style={{fontFamily: 'Times New Roman', fontWeight: 'bold', fontSize: 26, marginBottom: 40, color: 'var(--text-main)'}}>
-                            The Gentlemen's Wager
-                        </div>
-                        <h3 style={{marginBottom: 8, fontSize: 18}}>Create Username</h3>
-                        <p style={{opacity: 0.6, fontSize: 14, marginBottom: 24}}>This is how friends will find you.</p>
-                        
-                        <input id="usernameInput" className="input-std input-lg" placeholder="e.g. Tiger" style={{maxWidth: 300, width: '100%', marginBottom: 24}} />
-                        
-                        <button className="btn-full btn-primary" style={{maxWidth: 300}} disabled={isSavingUser} onClick={() => handleSetUsername(document.getElementById('usernameInput').value)}>
-                            {isSavingUser ? "Saving..." : "Set Username"}
-                        </button>
-                        <AlertModal />
-                    </div>
-                );
-            }
+            if (!username) return (
+                <div className="login-screen">
+                    <img src="./images/logo192.png" style={{width: 80, borderRadius: 16, marginBottom: 24, boxShadow: '0 4px 12px rgba(0,0,0,0.1)'}} />
+                    <div style={{fontFamily: 'Times New Roman', fontWeight: 'bold', fontSize: 26, marginBottom: 40, color: 'var(--text-main)'}}>The Gentlemen's Wager</div>
+                    <h3 style={{marginBottom: 8, fontSize: 18}}>Create Username</h3>
+                    <p style={{opacity: 0.6, fontSize: 14, marginBottom: 24}}>This is how friends will find you.</p>
+                    <input id="usernameInput" className="input-std input-lg" placeholder="e.g. Tiger" style={{maxWidth: 300, width: '100%', marginBottom: 24}} />
+                    <button className="btn-full btn-primary" style={{maxWidth: 300}} disabled={isSavingUser} onClick={() => handleSetUsername(document.getElementById('usernameInput').value)}>{isSavingUser ? "Saving..." : "Set Username"}</button>
+                    <AlertModal />
+                </div>
+            );
 
             return (
                 <>
-                    <MainApp user={user} username={username} roster={roster} onAddFriend={addFriend} onRemoveFriend={removeFriend} showAppAlert={showAppAlert} />
+                    <MainApp 
+                        user={user} username={username} roster={roster} 
+                        onAddFriend={addFriend} onRemoveFriend={removeFriend} 
+                        showAppAlert={showAppAlert} 
+                        darkMode={darkMode} setDarkMode={setDarkMode}
+                        handleInstall={handleInstall}
+                    />
                     <AlertModal />
                 </>
             );
         }
 
-        function MainApp({ user, username, roster, onAddFriend, onRemoveFriend, showAppAlert }) {
+        function MainApp({ user, username, roster, onAddFriend, onRemoveFriend, showAppAlert, darkMode, setDarkMode, handleInstall }) {
             const [view, setView] = useState('ledger'); 
             const [viewFriend, setViewFriend] = useState(null); 
             const [bets, setBets] = useState([]);
@@ -371,13 +379,13 @@ const firebaseConfig = {
                                 <h1>Scratch</h1>
                             )}
                         </div>
-                        {!viewFriend && <div className="icon-btn" onClick={() => setView('settings')}><i data-lucide="settings"></i></div>}
                     </header>
 
                     {!viewFriend && (
                         <div className="nav-tabs">
                             <div className={`nav-item ${view === 'ledger' ? 'active' : ''}`} onClick={() => setView('ledger')}>My Ledger</div>
-                            <div className={`nav-item ${view === 'settings' ? 'active' : ''}`} onClick={() => setView('settings')}>Clubhouse</div>
+                            <div className={`nav-item ${view === 'clubhouse' ? 'active' : ''}`} onClick={() => setView('clubhouse')}>Clubhouse</div>
+                            <div className={`nav-item ${view === 'settings' ? 'active' : ''}`} onClick={() => setView('settings')}>Settings</div>
                         </div>
                     )}
 
@@ -421,6 +429,64 @@ const firebaseConfig = {
                                 })}
                             </div>
                             <button className="fab" onClick={() => setModalOpen(true)}><i data-lucide="plus" size="32"></i></button>
+                        </div>
+                    )}
+
+                    {/* --- CLUBHOUSE --- */}
+                    {!viewFriend && view === 'clubhouse' && (
+                        <div className="content settings-view">
+                            <div className="section-label">MY FRIENDS</div>
+                            <div className="settings-card">
+                                {roster.length === 0 && <div style={{padding:10, color:'#999', fontSize:13}}>No friends added yet.</div>}
+                                {roster.map((friend, i) => (
+                                    <div key={i} className="roster-item" onClick={() => setViewFriend(friend)}>
+                                        <img src={friend.photoURL || './images/logo192.png'} className="roster-avatar" onError={(e) => e.target.style.opacity=0.5} />
+                                        <div>
+                                            <span style={{fontWeight:600, display:'block'}}>{friend.name} <i data-lucide="chevron-right" size="14" style={{verticalAlign:'middle', marginLeft:4, opacity:0.3}}></i></span>
+                                            <span style={{fontSize:12, color:'var(--primary)'}}>@{friend.username}</span>
+                                        </div>
+                                        <div className="delete-btn" onClick={(e) => { e.stopPropagation(); onRemoveFriend(friend.email); }}>×</div>
+                                    </div>
+                                ))}
+                                <div className="add-row">
+                                    <input id="newFriendUser" className="input-std" style={{flex:1}} placeholder="Search Username..." />
+                                    <button className="btn-primary" style={{borderRadius:8, padding:'0 16px', border:'none', cursor:'pointer'}} onClick={() => {
+                                        const val = document.getElementById('newFriendUser').value;
+                                        if(val) { onAddFriend(val); document.getElementById('newFriendUser').value = ''; }
+                                    }}>Add</button>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* --- SETTINGS --- */}
+                    {!viewFriend && view === 'settings' && (
+                        <div className="content settings-view">
+                            <div style={{textAlign:'center', marginBottom:30}}>
+                                <img src={user.photoURL} style={{width:80, borderRadius:'50%', border:'3px solid var(--primary)'}} />
+                                <h2>{user.displayName}</h2>
+                                <p style={{fontSize:14, fontWeight:'bold', color:'var(--primary)'}}>@{username}</p>
+                            </div>
+
+                            <div className="settings-card">
+                                <div className="settings-row">
+                                    <span style={{fontWeight:600}}>Dark Mode</span>
+                                    <input type="checkbox" checked={darkMode} onChange={() => setDarkMode(!darkMode)} style={{transform: 'scale(1.5)', accentColor: 'var(--primary)'}} />
+                                </div>
+                            </div>
+
+                            <div className="settings-card" style={{padding:20}}>
+                                <h4 style={{marginBottom:10}}>How to Play</h4>
+                                <ol style={{paddingLeft:20, color:'var(--text-sub)', fontSize:14, lineHeight:1.6}}>
+                                    <li>Add friends in the Clubhouse tab.</li>
+                                    <li>Tap (+) to place a wager.</li>
+                                    <li>Select winner, amount, and bet type.</li>
+                                    <li>Settlements happen on the course.</li>
+                                </ol>
+                            </div>
+
+                            <button className="btn-full btn-primary" onClick={handleInstall} style={{marginBottom:12}}>Install App</button>
+                            <button className="btn-full" style={{background:'transparent', border:'1px solid #DC2626', color:'#DC2626'}} onClick={() => window.ops.signOut(window.auth)}>Sign Out</button>
                         </div>
                     )}
 
@@ -480,39 +546,6 @@ const firebaseConfig = {
                                     </>
                                 );
                             })()}
-                        </div>
-                    )}
-
-                    {/* --- CLUBHOUSE (FRIENDS) --- */}
-                    {!viewFriend && view === 'settings' && (
-                        <div className="settings-view">
-                            <div style={{textAlign:'center', marginBottom:30}}>
-                                <img src={user.photoURL} style={{width:80, borderRadius:'50%', border:'3px solid var(--primary)'}} />
-                                <h2>{user.displayName}</h2>
-                                <p style={{fontSize:14, fontWeight:'bold', color:'var(--primary)'}}>@{username}</p>
-                            </div>
-                            <div className="section-label">MY FRIENDS</div>
-                            <div className="settings-card">
-                                {roster.length === 0 && <div style={{padding:10, color:'#999', fontSize:13}}>No friends added yet.</div>}
-                                {roster.map((friend, i) => (
-                                    <div key={i} className="roster-item" onClick={() => setViewFriend(friend)}>
-                                        <img src={friend.photoURL || './images/logo192.png'} className="roster-avatar" onError={(e) => e.target.style.opacity=0.5} />
-                                        <div>
-                                            <span style={{fontWeight:600, display:'block'}}>{friend.name} <i data-lucide="chevron-right" size="14" style={{verticalAlign:'middle', marginLeft:4, opacity:0.3}}></i></span>
-                                            <span style={{fontSize:12, color:'var(--primary)'}}>@{friend.username}</span>
-                                        </div>
-                                        <div className="delete-btn" onClick={(e) => { e.stopPropagation(); onRemoveFriend(friend.email); }}>×</div>
-                                    </div>
-                                ))}
-                                <div className="add-row">
-                                    <input id="newFriendUser" className="input-std" style={{flex:1}} placeholder="Search Username..." />
-                                    <button className="btn-primary" style={{borderRadius:8, padding:'0 16px', border:'none', cursor:'pointer'}} onClick={() => {
-                                        const val = document.getElementById('newFriendUser').value;
-                                        if(val) { onAddFriend(val); document.getElementById('newFriendUser').value = ''; }
-                                    }}>Add</button>
-                                </div>
-                            </div>
-                            <button className="btn-full" style={{background:'transparent', border:'1px solid #DC2626', color:'#DC2626'}} onClick={() => window.ops.signOut(window.auth)}>Sign Out</button>
                         </div>
                     )}
 
@@ -644,7 +677,10 @@ const firebaseConfig = {
                             </div>
                         )}
 
-                        <button className="btn-full btn-primary" disabled={!winnerEmail || !type || (type.id==='CUSTOM' && !customType)} onClick={handleSubmit}>
+                        <button 
+                            className="btn-full btn-primary" 
+                            disabled={!winnerEmail || !type || (type.id==='CUSTOM' && !customType) || participants.length < 2} 
+                            onClick={handleSubmit}>
                             Place Bet <i data-lucide="check-circle" size="18" style={{marginLeft:8, verticalAlign:'text-bottom'}}></i>
                         </button>
                     </div>
