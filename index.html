@@ -40,10 +40,10 @@
         /* CONTENT */
         .content { flex: 1; padding-bottom: 100px; overflow-y: auto; }
         
-        /* HERO GRID - Perfectly Aligned Boxes */
+        /* HERO GRID */
         .hero-grid { display: flex; gap: 16px; padding: 20px; border-bottom: 1px solid var(--border); background: var(--bg-body); }
         .hero-box { 
-            flex: 1; height: 140px; /* Fixed height for exact alignment */
+            flex: 1; height: 140px; 
             background: var(--bg-card); border: 1px solid var(--border); border-radius: 16px; 
             padding: 16px; display: flex; flex-direction: column; align-items: center; justify-content: center; 
             box-shadow: 0 2px 4px rgba(0,0,0,0.03); text-align: center;
@@ -118,7 +118,7 @@
         import { getFirestore, collection, addDoc, doc, updateDoc, getDocs, getDoc, setDoc, query, where, orderBy, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
         import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js";
         
-    // Your web app's Firebase configuration
+       // Your web app's Firebase configuration
 const firebaseConfig = {
   apiKey: "AIzaSyBPBps7eOq5gqyT5LuOnUGJkhPumBbZh-w",
   authDomain: "scratch-d0420.firebaseapp.com",
@@ -156,7 +156,6 @@ const firebaseConfig = {
             const [isStandalone, setIsStandalone] = useState(false);
             const [darkMode, setDarkMode] = useState(localStorage.getItem('theme') === 'dark');
 
-            // --- THEME & INSTALL ---
             useEffect(() => {
                 if (darkMode) {
                     document.body.classList.add('dark-mode');
@@ -177,7 +176,6 @@ const firebaseConfig = {
                 });
             }, []);
 
-            // --- AUTH ---
             useEffect(() => {
                 setGlobalAlert = setAlertState; 
                 const timer = setTimeout(() => {
@@ -246,12 +244,10 @@ const firebaseConfig = {
                 } catch(e) { setIsSavingUser(false); showAppAlert("Error", "Could not save."); }
             };
 
-            // --- BIDIRECTIONAL FRIEND ADDING ---
             const addFriend = async (friendUsername) => {
                 const cleanName = friendUsername.trim().toLowerCase().replace('@', '');
                 
                 try {
-                    // 1. Find Friend
                     const q = window.ops.query(window.ops.collection(window.db, "users"), window.ops.where("username", "==", cleanName));
                     const snap = await window.ops.getDocs(q);
                     
@@ -261,7 +257,6 @@ const firebaseConfig = {
                     
                     if(friendData.email === user.email) return showAppAlert("Error", "You can't add yourself!");
                     
-                    // 2. Add Friend to MY roster
                     const newFriendForMe = { 
                         name: friendData.displayName || cleanName, 
                         email: friendData.email, 
@@ -273,35 +268,28 @@ const firebaseConfig = {
                     
                     const myNewRoster = [...roster, newFriendForMe];
                     setRoster(myNewRoster);
-                    
                     const myRef = window.ops.doc(window.db, "users", user.uid);
                     await window.ops.updateDoc(myRef, { roster: myNewRoster });
 
-                    // 3. Add ME to FRIEND'S roster (Bidirectional)
+                    // BIDIRECTIONAL ADD
                     const meForFriend = {
                         name: user.displayName || username,
                         email: user.email,
                         username: username,
                         photoURL: user.photoURL
                     };
-
                     const friendRef = window.ops.doc(window.db, "users", friendDoc.id);
-                    // We grab their doc again to be safe
                     const friendSnap = await window.ops.getDoc(friendRef);
                     if(friendSnap.exists()) {
                         const theirRoster = friendSnap.data().roster || [];
-                        // Only add me if I'm not already there
                         if(!theirRoster.some(r => r.username === username)) {
                             const theirNewRoster = [...theirRoster, meForFriend];
                             await window.ops.updateDoc(friendRef, { roster: theirNewRoster });
                         }
                     }
-
                     showAppAlert("Connected!", "You and @" + cleanName + " are now connected.");
 
-                } catch (e) {
-                    showAppAlert("Error", "Connection failed: " + e.message);
-                }
+                } catch (e) { showAppAlert("Error", e.message); }
             };
 
             const removeFriend = async (friendEmail) => {
@@ -323,7 +311,7 @@ const firebaseConfig = {
                 ) : null
             );
 
-            if (loading) return <div className="login-screen" style={{justifyContent: 'center', paddingTop: 0}}><div>Loading...</div><div id="loading-tip" className="loading-tip">Taking a long time? <br/>Disable AdBlocker or try Incognito.</div></div>;
+            if (loading) return <div className="login-screen" style={{justifyContent: 'center', paddingTop: 0}}><div>Loading...</div></div>;
 
             if (!user) return (
                 <div className="login-screen" style={{justifyContent: 'center', paddingTop: 0}}>
@@ -362,24 +350,20 @@ const firebaseConfig = {
             );
         }
 
-        // --- MAIN APP COMPONENT ---
         function MainApp({ user, username, roster, onAddFriend, onRemoveFriend, showAppAlert, darkMode, setDarkMode, handleInstall, isStandalone }) {
-            // View State: 'ledger', 'clubhouse', 'settings', 'friend'
-            const [view, setView] = useState('ledger');
-            const [lastView, setLastView] = useState('ledger'); // To return from settings
+            // SINGLE SOURCE OF TRUTH FOR VIEW
+            const [view, setView] = useState('ledger'); // 'ledger', 'clubhouse', 'settings', 'friend'
+            const [lastTab, setLastTab] = useState('ledger'); // tracks 'ledger' or 'clubhouse'
             
-            // Data States
             const [activeFriend, setActiveFriend] = useState(null); 
             const [bets, setBets] = useState([]);
             const [modalOpen, setModalOpen] = useState(false);
 
-            // Fetch Bets
             useEffect(() => {
                 const q = window.ops.query(
                     window.ops.collection(window.db, "bets"), 
                     window.ops.where("participants", "array-contains", user.email)
                 );
-                
                 return window.ops.onSnapshot(q, (snapshot) => {
                     const allBets = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                     allBets.sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
@@ -387,7 +371,6 @@ const firebaseConfig = {
                 });
             }, [user]);
 
-            // Stats Helper
             const getStats = (betList) => {
                 let balance = 0;
                 betList.forEach(b => {
@@ -426,19 +409,16 @@ const firebaseConfig = {
                 }
             };
 
-            // Navigation
-            const goToSettings = () => {
-                setLastView(view);
-                setView('settings');
+            // NAVIGATION LOGIC
+            const switchTab = (tab) => {
+                setView(tab);
+                setLastTab(tab);
+                setActiveFriend(null);
             };
-            
-            const goBack = () => {
-                if (view === 'settings') {
-                    setView(lastView === 'settings' ? 'ledger' : lastView);
-                } else if (view === 'friend') {
-                    setView('clubhouse');
-                    setActiveFriend(null);
-                }
+
+            const openSettings = () => {
+                setActiveFriend(null);
+                setView('settings');
             };
 
             const openFriend = (friend) => {
@@ -446,47 +426,42 @@ const firebaseConfig = {
                 setView('friend');
             };
 
-            // --- RENDERERS ---
-
-            const renderHeader = () => (
-                <header className="header">
-                    {view === 'settings' ? (
-                        <>
-                            <div className="icon-btn" onClick={goBack}><i data-lucide="arrow-left" color="white"></i></div>
-                            <div className="brand">Settings</div>
-                            <div style={{width:40}}></div>
-                        </>
-                    ) : view === 'friend' ? (
-                        <>
-                            <div className="icon-btn" onClick={goBack}><i data-lucide="arrow-left" color="white"></i></div>
-                            <div className="brand">{activeFriend ? activeFriend.name : 'Friend'}</div>
-                            <div style={{width:40}}></div>
-                        </>
-                    ) : (
-                        <>
-                            <div className="brand">Scratch</div>
-                            <div className="icon-btn" onClick={goToSettings}><i data-lucide="settings" color="white"></i></div>
-                        </>
-                    )}
-                </header>
-            );
-
-            const renderTabs = () => {
-                if (view === 'settings' || view === 'friend') return null;
-                return (
-                    <div className="nav-tabs">
-                        <div className={`nav-item ${view === 'ledger' ? 'active' : ''}`} onClick={() => setView('ledger')}>My Ledger</div>
-                        <div className={`nav-item ${view === 'clubhouse' ? 'active' : ''}`} onClick={() => setView('clubhouse')}>Clubhouse</div>
-                    </div>
-                );
+            const goBack = () => {
+                if (view === 'settings') setView(lastTab);
+                else if (view === 'friend') setView('clubhouse');
             };
 
             return (
                 <div className="app-container">
-                    {renderHeader()}
-                    {renderTabs()}
+                    <header className="header">
+                        {view === 'settings' ? (
+                            <>
+                                <div className="icon-btn" onClick={goBack}><i data-lucide="arrow-left" color="white"></i></div>
+                                <div className="brand">Settings</div>
+                                <div style={{width:40}}></div>
+                            </>
+                        ) : view === 'friend' ? (
+                            <>
+                                <div className="icon-btn" onClick={goBack}><i data-lucide="arrow-left" color="white"></i></div>
+                                <div className="brand">{activeFriend ? activeFriend.name : 'Friend'}</div>
+                                <div style={{width:40}}></div>
+                            </>
+                        ) : (
+                            <>
+                                <div className="brand">Scratch</div>
+                                <div className="icon-btn" onClick={openSettings}><i data-lucide="settings" color="white"></i></div>
+                            </>
+                        )}
+                    </header>
 
-                    {/* --- 1. MY LEDGER --- */}
+                    {(view === 'ledger' || view === 'clubhouse') && (
+                        <div className="nav-tabs">
+                            <div className={`nav-item ${view === 'ledger' ? 'active' : ''}`} onClick={() => switchTab('ledger')}>My Ledger</div>
+                            <div className={`nav-item ${view === 'clubhouse' ? 'active' : ''}`} onClick={() => switchTab('clubhouse')}>Clubhouse</div>
+                        </div>
+                    )}
+
+                    {/* --- VIEW: LEDGER --- */}
                     {view === 'ledger' && (
                         <div className="content">
                             <div className="hero-grid">
@@ -501,7 +476,6 @@ const firebaseConfig = {
                                     <div className="plus-btn"><i data-lucide="plus" size="28"></i></div>
                                 </div>
                             </div>
-                            
                             <div style={{padding:'24px 20px 10px', fontWeight:700, display:'flex', alignItems:'center', gap:8}}>
                                 <i data-lucide="history" size="18"></i> Recent Activity
                             </div>
@@ -527,7 +501,7 @@ const firebaseConfig = {
                         </div>
                     )}
 
-                    {/* --- 2. CLUBHOUSE --- */}
+                    {/* --- VIEW: CLUBHOUSE --- */}
                     {view === 'clubhouse' && (
                         <div className="content settings-view">
                             <div className="section-label">MY FRIENDS</div>
@@ -554,7 +528,7 @@ const firebaseConfig = {
                         </div>
                     )}
 
-                    {/* --- 3. SETTINGS --- */}
+                    {/* --- VIEW: SETTINGS --- */}
                     {view === 'settings' && (
                         <div className="content settings-view">
                             <div style={{textAlign:'center', marginBottom:30}}>
@@ -562,14 +536,12 @@ const firebaseConfig = {
                                 <h2>{user.displayName}</h2>
                                 <p style={{fontSize:14, fontWeight:'bold', color:'var(--primary)'}}>@{username}</p>
                             </div>
-
                             <div className="settings-card">
                                 <div className="settings-row">
                                     <span style={{fontWeight:600}}>Dark Mode</span>
                                     <input type="checkbox" checked={darkMode} onChange={() => setDarkMode(!darkMode)} style={{transform: 'scale(1.5)', accentColor: 'var(--primary)'}} />
                                 </div>
                             </div>
-
                             <div className="settings-card" style={{padding:20}}>
                                 <h4 style={{marginBottom:10}}>How to Play</h4>
                                 <ol style={{paddingLeft:20, color:'var(--text-sub)', fontSize:14, lineHeight:1.6}}>
@@ -579,7 +551,6 @@ const firebaseConfig = {
                                     <li>Settlements happen on the course.</li>
                                 </ol>
                             </div>
-
                             {!isStandalone && (
                                 <button className="btn-full btn-primary" onClick={handleInstall} style={{marginBottom:12}}>Install App</button>
                             )}
@@ -587,7 +558,7 @@ const firebaseConfig = {
                         </div>
                     )}
 
-                    {/* --- 4. FRIEND PROFILE --- */}
+                    {/* --- VIEW: FRIEND PROFILE --- */}
                     {view === 'friend' && activeFriend && (
                         <div className="content">
                             {(() => {
@@ -697,6 +668,7 @@ const firebaseConfig = {
                             <div onClick={onClose} style={{cursor:'pointer'}}><i data-lucide="x"></i></div>
                         </div>
 
+                        {/* COURSE & HOLE */}
                         <div style={{background:'var(--bg-body)', padding:16, borderRadius:12, marginBottom:24}}>
                             <div className="section-label">LOCATION</div>
                             <div style={{display:'flex', gap:10, alignItems:'center', marginBottom:10}}>
