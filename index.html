@@ -8,83 +8,108 @@
     <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-    
     <script src="https://unpkg.com/lucide@latest"></script>
 
     <style>
         :root {
-            --masters-green: #00594C; /* The famous Green Jacket color */
-            --masters-yellow: #E8D55A; /* Subtle logo yellow */
-            --paper-white: #F8F9FA;
-            --text-dark: #1F2937;
-            --font-serif: "Times New Roman", Times, serif; /* Premium feel */
+            --masters-green: #00594C; /* Deep Emerald */
+            --masters-yellow: #E8D55A; /* Logo Yellow */
+            --bg-white: #FFFFFF;
+            --bg-off-white: #F9FAFB;
+            --text-main: #111827;
+            --text-muted: #6B7280;
+            --font-serif: "Times New Roman", Times, serif; 
             --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
         }
 
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { background-color: var(--paper-white); color: var(--text-dark); font-family: var(--font-sans); -webkit-font-smoothing: antialiased; }
+        * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+        body { background-color: var(--bg-off-white); color: var(--text-main); font-family: var(--font-sans); }
         
-        /* APP LAYOUT */
-        .app-container { max-width: 500px; margin: 0 auto; min-height: 100vh; position: relative; padding-bottom: 100px; background: white; box-shadow: 0 0 20px rgba(0,0,0,0.05); }
+        /* APP CONTAINER */
+        .app-container { max-width: 500px; margin: 0 auto; min-height: 100vh; background: var(--bg-white); box-shadow: 0 0 20px rgba(0,0,0,0.05); display: flex; flex-direction: column; }
         
         /* HEADER */
-        .header { background-color: var(--masters-green); padding: 20px 24px; color: white; display: flex; justify-content: space-between; align-items: center; }
-        .brand h1 { font-family: var(--font-serif); font-size: 24px; letter-spacing: 0.5px; font-weight: 700; }
-        .brand p { font-size: 12px; opacity: 0.8; letter-spacing: 1px; text-transform: uppercase; }
-        .profile-pic { width: 36px; height: 36px; border-radius: 50%; border: 2px solid var(--masters-yellow); }
+        .header { background-color: var(--masters-green); padding: 16px 20px; color: white; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 10; }
+        .brand { display: flex; flex-direction: column; }
+        .brand h1 { font-family: var(--font-serif); font-size: 22px; font-weight: 700; letter-spacing: 0.5px; }
+        .brand small { font-size: 10px; text-transform: uppercase; letter-spacing: 2px; opacity: 0.8; margin-top: 2px; }
+        .profile-btn { width: 36px; height: 36px; border-radius: 50%; border: 2px solid var(--masters-yellow); overflow: hidden; cursor: pointer; }
+        .profile-btn img { width: 100%; height: 100%; object-fit: cover; }
 
-        /* BALANCE CARD */
-        .balance-section { padding: 24px; text-align: center; border-bottom: 1px solid #eee; }
-        .balance-label { color: #6b7280; font-size: 13px; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; font-weight: 600; }
-        .balance-amount { font-family: var(--font-serif); font-size: 48px; font-weight: 700; color: var(--text-dark); }
-        .balance-positive { color: var(--masters-green); }
-        .balance-negative { color: #B91C1C; }
+        /* TABS (Navigation) */
+        .nav-tabs { display: flex; border-bottom: 1px solid #e5e7eb; background: white; }
+        .nav-item { flex: 1; text-align: center; padding: 16px; color: var(--text-muted); font-weight: 600; cursor: pointer; font-size: 14px; position: relative; }
+        .nav-item.active { color: var(--masters-green); }
+        .nav-item.active::after { content: ''; position: absolute; bottom: 0; left: 0; right: 0; height: 3px; background: var(--masters-green); border-radius: 3px 3px 0 0; }
 
-        /* FEED */
-        .feed-header { padding: 20px 24px 10px; font-family: var(--font-serif); font-size: 18px; color: var(--text-dark); font-weight: 700; border-bottom: 2px solid var(--masters-green); display: inline-block; margin-left: 24px; margin-bottom: 10px;}
-        .list { padding: 0 16px; }
-        .bet-row { display: flex; align-items: center; padding: 16px; border-bottom: 1px solid #f3f4f6; }
-        .bet-icon { width: 40px; height: 40px; background: #f3f4f6; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-right: 16px; color: var(--masters-green); }
-        .bet-details { flex: 1; }
-        .bet-title { font-weight: 600; font-size: 16px; color: var(--text-dark); }
-        .bet-meta { font-size: 12px; color: #6b7280; margin-top: 2px; }
-        .bet-amt { font-family: var(--font-serif); font-weight: 700; font-size: 18px; }
+        /* CONTENT AREAS */
+        .content { flex: 1; padding-bottom: 80px; } /* Space for FAB */
 
-        /* FAB */
-        .fab { position: fixed; bottom: 30px; right: 24px; width: 64px; height: 64px; border-radius: 50%; background: var(--masters-green); color: white; border: none; box-shadow: 0 4px 12px rgba(0, 89, 76, 0.4); display: flex; align-items: center; justify-content: center; cursor: pointer; transition: transform 0.1s; }
+        /* BALANCE CARD (Home) */
+        .hero-card { padding: 32px 20px; text-align: center; background: white; border-bottom: 1px solid #f3f4f6; }
+        .hero-label { font-size: 12px; text-transform: uppercase; color: var(--text-muted); letter-spacing: 1px; font-weight: 700; margin-bottom: 8px; }
+        .hero-amount { font-family: var(--font-serif); font-size: 56px; font-weight: 700; line-height: 1; }
+        .text-green { color: var(--masters-green); }
+        .text-red { color: #B91C1C; }
+
+        /* ACTIVITY FEED */
+        .section-title { padding: 24px 20px 10px; font-family: var(--font-serif); font-size: 18px; font-weight: 700; color: var(--text-main); display: flex; align-items: center; gap: 8px; }
+        .feed-list { padding: 0 16px; }
+        .bet-row { display: flex; align-items: center; padding: 16px 0; border-bottom: 1px solid #f3f4f6; }
+        .bet-icon { width: 42px; height: 42px; background: #f0fdf4; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-right: 16px; color: var(--masters-green); border: 1px solid #dcfce7; }
+        .bet-info { flex: 1; }
+        .bet-type { font-weight: 600; font-size: 16px; margin-bottom: 4px; }
+        .bet-meta { font-size: 13px; color: var(--text-muted); }
+        .bet-val { font-family: var(--font-serif); font-size: 18px; font-weight: 700; }
+
+        /* PROFILE VIEW */
+        .profile-view { padding: 24px; text-align: center; }
+        .profile-lg { width: 100px; height: 100px; border-radius: 50%; margin: 0 auto 16px; border: 4px solid var(--masters-green); box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); }
+        .profile-name { font-family: var(--font-serif); font-size: 28px; font-weight: 700; margin-bottom: 4px; }
+        .profile-email { color: var(--text-muted); margin-bottom: 32px; font-size: 14px; }
+        
+        .stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 32px; }
+        .stat-card { background: #f9fafb; padding: 16px; border-radius: 12px; border: 1px solid #e5e7eb; }
+        .stat-val { font-family: var(--font-serif); font-size: 24px; font-weight: 700; color: var(--masters-green); }
+        .stat-label { font-size: 12px; color: var(--text-muted); text-transform: uppercase; margin-top: 4px; font-weight: 600; }
+
+        .logout-btn { background: white; border: 1px solid #e5e7eb; color: #B91C1C; padding: 14px; width: 100%; border-radius: 12px; font-weight: 600; font-size: 16px; cursor: pointer; }
+
+        /* FAB (Add Button) */
+        .fab { position: fixed; bottom: 30px; right: 24px; width: 64px; height: 64px; border-radius: 50%; background: var(--masters-green); color: white; border: none; box-shadow: 0 10px 25px -5px rgba(0, 89, 76, 0.4); display: flex; align-items: center; justify-content: center; cursor: pointer; transition: transform 0.1s; z-index: 50; }
         .fab:active { transform: scale(0.95); }
 
         /* LOGIN SCREEN */
-        .login-screen { height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; background-color: var(--masters-green); color: white; padding: 40px; text-align: center; }
-        .login-title { font-family: var(--font-serif); font-size: 42px; margin-bottom: 10px; }
-        .login-btn { background: white; color: var(--masters-green); border: none; padding: 16px 32px; border-radius: 50px; font-weight: bold; font-size: 16px; margin-top: 40px; cursor: pointer; box-shadow: 0 4px 12px rgba(0,0,0,0.2); }
+        .login-screen { height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; background-color: var(--masters-green); color: white; padding: 32px; text-align: center; }
+        .login-btn { background: white; color: var(--masters-green); border: none; padding: 16px 32px; border-radius: 50px; font-weight: bold; font-size: 16px; margin-top: 40px; cursor: pointer; box-shadow: 0 10px 25px rgba(0,0,0,0.2); }
 
         /* MODAL */
-        .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.6); display: flex; align-items: flex-end; z-index: 100; backdrop-filter: blur(2px); }
-        .modal-content { background: white; width: 100%; border-radius: 24px 24px 0 0; padding: 24px; max-height: 85vh; overflow-y: auto; box-shadow: 0 -4px 20px rgba(0,0,0,0.1); }
-        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
-        .modal-title { font-family: var(--font-serif); font-size: 24px; font-weight: 700; color: var(--masters-green); }
-
-        /* CONTROLS */
-        .control-label { display: block; font-size: 12px; font-weight: 700; color: #9ca3af; margin-bottom: 10px; letter-spacing: 0.5px; }
+        .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); backdrop-filter: blur(4px); display: flex; align-items: flex-end; z-index: 100; animation: fadeIn 0.2s; }
+        .modal-content { background: white; width: 100%; border-radius: 24px 24px 0 0; padding: 24px; max-height: 90vh; overflow-y: auto; animation: slideUp 0.3s; box-shadow: 0 -10px 40px rgba(0,0,0,0.1); }
         
-        .segment-control { display: flex; background: #f3f4f6; padding: 4px; border-radius: 12px; margin-bottom: 24px; }
-        .segment-btn { flex: 1; padding: 10px; border: none; background: transparent; border-radius: 8px; font-weight: 600; color: #6b7280; cursor: pointer; transition: all 0.2s; }
-        .segment-btn.active { background: white; color: var(--masters-green); box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
-        .segment-btn.active-red { background: white; color: #B91C1C; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+        /* FORM CONTROLS */
+        .control-label { display: block; font-size: 11px; font-weight: 800; color: #9ca3af; margin-bottom: 12px; letter-spacing: 1px; text-transform: uppercase; }
+        
+        .winner-toggle { display: flex; background: #f3f4f6; padding: 4px; border-radius: 12px; margin-bottom: 24px; }
+        .toggle-opt { flex: 1; padding: 12px; text-align: center; font-weight: 600; font-size: 14px; border-radius: 8px; cursor: pointer; color: var(--text-muted); border: 2px solid transparent; }
+        .toggle-opt.selected-green { background: white; color: var(--masters-green); box-shadow: 0 2px 8px rgba(0,0,0,0.05); border-color: #d1fae5; }
+        .toggle-opt.selected-red { background: white; color: #B91C1C; box-shadow: 0 2px 8px rgba(0,0,0,0.05); border-color: #fee2e2; }
 
-        .chip-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 24px; }
-        .chip { padding: 12px 0; border: 1px solid #e5e7eb; background: white; border-radius: 10px; text-align: center; font-weight: 600; color: var(--text-dark); cursor: pointer; }
-        .chip.selected { background: var(--masters-green); color: white; border-color: var(--masters-green); }
+        .chip-grid { display: flex; gap: 10px; margin-bottom: 24px; overflow-x: auto; padding-bottom: 4px; }
+        .chip { flex: 1; padding: 14px 0; border: 1px solid #e5e7eb; background: white; border-radius: 12px; text-align: center; font-weight: 700; color: var(--text-main); cursor: pointer; min-width: 60px; font-family: var(--font-serif); font-size: 18px; }
+        .chip.active { background: var(--masters-green); color: white; border-color: var(--masters-green); }
 
-        .type-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 30px; }
-        .type-card { border: 1px solid #e5e7eb; padding: 16px; border-radius: 12px; text-align: center; cursor: pointer; transition: all 0.2s; background: white; }
-        .type-card.selected { border-color: var(--masters-green); background: #f0fdf4; }
-        .type-card strong { display: block; font-size: 16px; margin-bottom: 4px; color: var(--text-dark); }
-        .type-card small { font-size: 11px; color: #6b7280; }
+        .type-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 32px; }
+        .type-card { border: 1px solid #e5e7eb; padding: 16px; border-radius: 12px; text-align: center; cursor: pointer; background: white; transition: all 0.2s; }
+        .type-card.active { border-color: var(--masters-green); background: #f0fdf4; box-shadow: 0 0 0 2px var(--masters-green); }
+        .type-card strong { display: block; font-size: 15px; margin-bottom: 4px; color: var(--text-main); }
+        .type-card small { font-size: 11px; color: var(--text-muted); }
 
-        .action-btn { width: 100%; background: var(--masters-green); color: white; padding: 18px; border-radius: 16px; border: none; font-size: 18px; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; }
-        .action-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+        .primary-btn { width: 100%; background: var(--masters-green); color: white; padding: 18px; border-radius: 16px; border: none; font-size: 16px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; }
+        .primary-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+        @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
     </style>
 </head>
 <body>
@@ -113,52 +138,48 @@ const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const provider = new GoogleAuthProvider();
 
-        // Make Firebase available to React
         window.db = db;
         window.auth = auth;
         window.provider = provider;
-        window.firebaseOps = { collection, addDoc, query, orderBy, onSnapshot, serverTimestamp, signInWithPopup, signOut, onAuthStateChanged };
+        window.ops = { collection, addDoc, query, orderBy, onSnapshot, serverTimestamp, signInWithPopup, signOut, onAuthStateChanged };
     </script>
 
     <script type="text/babel">
-        const { useState, useEffect } = React;
+        const { useState, useEffect, useMemo } = React;
 
         function App() {
             const [user, setUser] = useState(null);
             const [loading, setLoading] = useState(true);
 
             useEffect(() => {
-                if (!window.firebaseOps) return;
-                const { onAuthStateChanged } = window.firebaseOps;
-                
-                // Check if user is logged in
-                const unsubscribe = onAuthStateChanged(window.auth, (currentUser) => {
-                    setUser(currentUser);
-                    setLoading(false);
+                if (!window.ops) return;
+                const unsubscribe = window.ops.onAuthStateChanged(window.auth, (u) => {
+                    setUser(u);
+                    setLoading(false); // Stop loading once Auth decides (User or Null)
                 });
                 return unsubscribe;
             }, []);
 
             const handleLogin = async () => {
                 try {
-                    await window.firebaseOps.signInWithPopup(window.auth, window.provider);
-                } catch (error) {
-                    alert("Login failed: " + error.message);
+                    await window.ops.signInWithPopup(window.auth, window.provider);
+                } catch (e) {
+                    alert("Login failed: " + e.message);
                 }
             };
 
-            const handleLogout = () => {
-                window.firebaseOps.signOut(window.auth);
-            };
-
-            if (loading) return <div className="login-screen">Loading...</div>;
+            if (loading) return (
+                <div className="login-screen">
+                    <div>Loading...</div>
+                </div>
+            );
 
             if (!user) {
                 return (
                     <div className="login-screen">
-                        <div className="brand">
-                            <h1 className="login-title">Scratch</h1>
-                            <p>The Gentlemen's Ledger</p>
+                        <div style={{marginBottom: 40}}>
+                            <h1 style={{fontFamily: 'Times New Roman', fontSize: 48, marginBottom: 8}}>Scratch</h1>
+                            <p style={{opacity: 0.8, letterSpacing: 2, textTransform: 'uppercase', fontSize: 12}}>The Gentlemen's Ledger</p>
                         </div>
                         <button className="login-btn" onClick={handleLogin}>
                             Sign in with Google
@@ -167,50 +188,53 @@ const app = initializeApp(firebaseConfig);
                 );
             }
 
-            return <Dashboard user={user} onLogout={handleLogout} />;
+            return <MainApp user={user} />;
         }
 
-        function Dashboard({ user, onLogout }) {
+        function MainApp({ user }) {
+            const [view, setView] = useState('ledger'); // 'ledger' or 'profile'
             const [bets, setBets] = useState([]);
-            const [balance, setBalance] = useState(0);
             const [modalOpen, setModalOpen] = useState(false);
 
+            // --- 1. Load Data ---
             useEffect(() => {
-                const { collection, query, orderBy, onSnapshot } = window.firebaseOps;
+                const q = window.ops.query(
+                    window.ops.collection(window.db, "bets"), 
+                    window.ops.orderBy("createdAt", "desc")
+                );
                 
-                // Order by date
-                const q = query(collection(window.db, "bets"), orderBy("createdAt", "desc"));
-                
-                const unsubscribe = onSnapshot(q, (snapshot) => {
-                    const betsData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                    setBets(betsData);
-                    
-                    // Logic: If 'winner' matches my Name/ID, I gain money. Else, I lose.
-                    // For this simple version, we assume "Me" in the toggle means the logged in user won.
-                    const total = betsData.reduce((acc, curr) => {
-                        const isMyWin = curr.winner === 'Me'; 
-                        return isMyWin ? acc + curr.amount : acc - curr.amount;
-                    }, 0);
-                    setBalance(total);
+                return window.ops.onSnapshot(q, (snapshot) => {
+                    setBets(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
                 });
-                return unsubscribe;
             }, []);
 
+            // --- 2. Calculate Stats ---
+            const stats = useMemo(() => {
+                let balance = 0;
+                let wins = 0;
+                let losses = 0;
+                
+                bets.forEach(b => {
+                    if (b.winner === 'Me') {
+                        balance += b.amount;
+                        wins++;
+                    } else {
+                        balance -= b.amount;
+                        losses++;
+                    }
+                });
+                return { balance, wins, losses, total: bets.length };
+            }, [bets]);
+
             const handleAddBet = async (type, amount, winner) => {
-                const { collection, addDoc, serverTimestamp } = window.firebaseOps;
                 try {
-                    await addDoc(collection(window.db, "bets"), {
-                        type,
-                        amount: parseInt(amount),
-                        winner, 
+                    await window.ops.addDoc(window.ops.collection(window.db, "bets"), {
+                        type, amount, winner,
                         createdBy: user.uid,
-                        creatorName: user.displayName,
-                        createdAt: serverTimestamp(),
+                        createdAt: window.ops.serverTimestamp()
                     });
                     setModalOpen(false);
-                } catch (e) {
-                    alert("Error saving bet: " + e.message);
-                }
+                } catch (e) { alert(e.message); }
             };
 
             return (
@@ -219,140 +243,169 @@ const app = initializeApp(firebaseConfig);
                     <header className="header">
                         <div className="brand">
                             <h1>Scratch</h1>
-                            <p>Ledger</p>
+                            <small>Ledger</small>
                         </div>
-                        <img 
-                            src={user.photoURL} 
-                            alt="Profile" 
-                            className="profile-pic" 
-                            onClick={onLogout}
-                        />
+                        <div className="profile-btn" onClick={() => setView(view === 'ledger' ? 'profile' : 'ledger')}>
+                            <img src={user.photoURL} alt="User" />
+                        </div>
                     </header>
 
-                    {/* Balance */}
-                    <div className="balance-section">
-                        <div className="balance-label">Current Standing</div>
-                        <div className={`balance-amount ${balance >= 0 ? 'balance-positive' : 'balance-negative'}`}>
-                            {balance >= 0 ? '+' : '-'}${Math.abs(balance)}
-                        </div>
+                    {/* Navigation */}
+                    <div className="nav-tabs">
+                        <div className={`nav-item ${view === 'ledger' ? 'active' : ''}`} onClick={() => setView('ledger')}>Ledger</div>
+                        <div className={`nav-item ${view === 'profile' ? 'active' : ''}`} onClick={() => setView('profile')}>My Profile</div>
                     </div>
 
-                    {/* Feed */}
-                    <div className="feed-header">Recent Activity</div>
-                    <div className="list">
-                        {bets.map(bet => (
-                            <div key={bet.id} className="bet-row">
-                                <div className="bet-icon">
-                                    <i data-lucide="trophy"></i>
-                                </div>
-                                <div className="bet-details">
-                                    <div className="bet-title">{bet.type}</div>
-                                    <div className="bet-meta">
-                                        {bet.winner === 'Me' ? 'You won' : 'Dave won'}
-                                    </div>
-                                </div>
-                                <div className={`bet-amt ${bet.winner === 'Me' ? 'balance-positive' : 'balance-negative'}`}>
-                                    {bet.winner === 'Me' ? '+' : '-'}${bet.amount}
+                    {/* VIEW: LEDGER */}
+                    {view === 'ledger' && (
+                        <div className="content">
+                            <div className="hero-card">
+                                <div className="hero-label">Net Balance</div>
+                                <div className={`hero-amount ${stats.balance >= 0 ? 'text-green' : 'text-red'}`}>
+                                    {stats.balance >= 0 ? '+' : '-'}${Math.abs(stats.balance)}
                                 </div>
                             </div>
-                        ))}
-                    </div>
 
-                    {/* FAB */}
-                    <button className="fab" onClick={() => setModalOpen(true)}>
-                        <i data-lucide="plus" size="32"></i>
-                    </button>
+                            <div className="section-title">
+                                <i data-lucide="history" size="18"></i> Recent Activity
+                            </div>
+                            
+                            <div className="feed-list">
+                                {bets.map(bet => (
+                                    <div key={bet.id} className="bet-row">
+                                        <div className="bet-icon">
+                                            <i data-lucide="trophy" size="20"></i>
+                                        </div>
+                                        <div className="bet-info">
+                                            <div className="bet-type">{bet.type}</div>
+                                            <div className="bet-meta">
+                                                {bet.winner === 'Me' ? 'You won' : 'Dave won'}
+                                            </div>
+                                        </div>
+                                        <div className={`bet-val ${bet.winner === 'Me' ? 'text-green' : 'text-red'}`}>
+                                            {bet.winner === 'Me' ? '+' : '-'}${bet.amount}
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
 
-                    {/* Modal */}
+                            <button className="fab" onClick={() => setModalOpen(true)}>
+                                <i data-lucide="plus" size="32"></i>
+                            </button>
+                        </div>
+                    )}
+
+                    {/* VIEW: PROFILE */}
+                    {view === 'profile' && (
+                        <div className="content profile-view">
+                            <img src={user.photoURL} className="profile-lg" />
+                            <h2 className="profile-name">{user.displayName}</h2>
+                            <p className="profile-email">{user.email}</p>
+
+                            <div className="stat-grid">
+                                <div className="stat-card">
+                                    <div className="stat-val text-green">{stats.wins}</div>
+                                    <div className="stat-label">Wins</div>
+                                </div>
+                                <div className="stat-card">
+                                    <div className="stat-val text-red">{stats.losses}</div>
+                                    <div className="stat-label">Losses</div>
+                                </div>
+                            </div>
+                            
+                            <div className="stat-card" style={{marginBottom: 32}}>
+                                <div className="stat-val">{stats.total}</div>
+                                <div className="stat-label">Total Bets Placed</div>
+                            </div>
+
+                            <button className="logout-btn" onClick={() => window.ops.signOut(window.auth)}>
+                                Sign Out
+                            </button>
+                        </div>
+                    )}
+
                     {modalOpen && (
-                        <CreateBetModal 
+                        <BetModal 
                             onClose={() => setModalOpen(false)} 
-                            onCreate={handleAddBet} 
+                            onSubmit={handleAddBet} 
                         />
                     )}
                 </div>
             );
         }
 
-        function CreateBetModal({ onClose, onCreate }) {
-            const [amount, setAmount] = useState(5);
+        function BetModal({ onClose, onSubmit }) {
             const [winner, setWinner] = useState('Me');
-            const [betType, setBetType] = useState(null); // Must select a type to submit
+            const [amount, setAmount] = useState(5);
+            const [type, setType] = useState(null);
 
             const presets = [
-                { label: "KP", full: "Closest to Pin" },
-                { label: "Drive", full: "Longest Drive" },
-                { label: "Sand", full: "Sand Save" },
-                { label: "Skin", full: "Hole Winner" },
+                { label: "KP", sub: "Closest to Pin" },
+                { label: "Drive", sub: "Longest Drive" },
+                { label: "Sand", sub: "Sand Save" },
+                { label: "Skin", sub: "Hole Winner" },
             ];
 
-            useEffect(() => {
-                lucide.createIcons();
-            }, []);
+            // Re-run icons when modal opens
+            useEffect(() => { setTimeout(() => lucide.createIcons(), 100) }, []);
 
             return (
                 <div className="modal-overlay">
                     <div className="modal-content">
-                        <div className="modal-header">
-                            <h2 className="modal-title">New Wager</h2>
-                            <button onClick={onClose} style={{border:'none', background:'none', cursor:'pointer'}}>
-                                <i data-lucide="x" color="#333"></i>
-                            </button>
+                        <div style={{display:'flex', justifyContent:'space-between', marginBottom: 20}}>
+                            <h3 style={{fontFamily:'Times New Roman', fontSize:24}}>New Wager</h3>
+                            <div onClick={onClose} style={{cursor:'pointer'}}><i data-lucide="x"></i></div>
                         </div>
 
-                        {/* 1. Winner Selection */}
-                        <label className="control-label">WHO WON?</label>
-                        <div className="segment-control">
-                            <button 
-                                className={`segment-btn ${winner === 'Me' ? 'active' : ''}`}
+                        <label className="control-label">Who Won?</label>
+                        <div className="winner-toggle">
+                            <div 
+                                className={`toggle-opt ${winner === 'Me' ? 'selected-green' : ''}`}
                                 onClick={() => setWinner('Me')}
                             >
                                 Me
-                            </button>
-                            <button 
-                                className={`segment-btn ${winner === 'Opponent' ? 'active-red' : ''}`}
+                            </div>
+                            <div 
+                                className={`toggle-opt ${winner === 'Opponent' ? 'selected-red' : ''}`}
                                 onClick={() => setWinner('Opponent')}
                             >
                                 Dave
-                            </button>
+                            </div>
                         </div>
 
-                        {/* 2. Amount Selection */}
-                        <label className="control-label">AMOUNT</label>
+                        <label className="control-label">Amount</label>
                         <div className="chip-grid">
-                            {[1, 5, 10, 20].map(amt => (
+                            {[1, 5, 10, 20, 50].map(val => (
                                 <div 
-                                    key={amt} 
-                                    className={`chip ${amount === amt ? 'selected' : ''}`}
-                                    onClick={() => setAmount(amt)}
+                                    key={val} 
+                                    className={`chip ${amount === val ? 'active' : ''}`}
+                                    onClick={() => setAmount(val)}
                                 >
-                                    ${amt}
+                                    ${val}
                                 </div>
                             ))}
                         </div>
 
-                        {/* 3. Type Selection */}
-                        <label className="control-label">BET TYPE</label>
+                        <label className="control-label">Bet Type</label>
                         <div className="type-grid">
                             {presets.map(p => (
                                 <div 
                                     key={p.label} 
-                                    className={`type-card ${betType === p.full ? 'selected' : ''}`}
-                                    onClick={() => setBetType(p.full)}
+                                    className={`type-card ${type === p.label ? 'active' : ''}`}
+                                    onClick={() => setType(p.label)}
                                 >
                                     <strong>{p.label}</strong>
-                                    <small>{p.full}</small>
+                                    <small>{p.sub}</small>
                                 </div>
                             ))}
                         </div>
 
-                        {/* 4. Submit Button (Fixes the click issue) */}
                         <button 
-                            className="action-btn"
-                            disabled={!betType} 
-                            onClick={() => onCreate(betType, amount, winner)}
+                            className="primary-btn" 
+                            disabled={!type}
+                            onClick={() => onSubmit(type, amount, winner)}
                         >
-                            Place Bet <i data-lucide="check-circle"></i>
+                            Place Bet <i data-lucide="check-circle" size="18"></i>
                         </button>
                     </div>
                 </div>
@@ -362,8 +415,8 @@ const app = initializeApp(firebaseConfig);
         const root = ReactDOM.createRoot(document.getElementById('root'));
         root.render(<App />);
         
-        // Init icons after render
-        setTimeout(() => lucide.createIcons(), 500);
+        // Init Icons
+        setInterval(() => lucide.createIcons(), 1000); 
     </script>
 </body>
 </html>
