@@ -12,22 +12,6 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="theme-color" content="#00594C">
 
-    <style>
-        #crash-report { display: none; padding: 20px; background: #222; color: #ff6b6b; font-family: monospace; position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 9999; white-space: pre-wrap; overflow: auto; }
-        .loading-text { color: white; font-family: sans-serif; opacity: 0.5; margin-top: 20px; text-align: center;}
-    </style>
-
-    <script>
-        window.onerror = function(msg, url, lineNo, columnNo, error) {
-            var report = document.getElementById('crash-report');
-            if(report) {
-                report.style.display = 'block';
-                report.innerHTML = "⚠️ APP CRASHED ⚠️\n\n" + msg + "\n\nLine: " + lineNo + "\nFile: " + url;
-            }
-            return false;
-        };
-    </script>
-
     <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
@@ -35,77 +19,116 @@
 
     <style>
         :root {
-            --primary: #00594C; --accent: #E8D55A; --bg-body: #F9FAFB; --bg-card: #FFFFFF;
-            --text-main: #111827; --text-sub: #6B7280; --border: #E5E7EB;
+            --primary: #00594C; /* Masters Green */
+            --accent: #E8D55A;  /* Yellow */
+            --bg-body: #F9FAFB;
+            --bg-card: #FFFFFF;
+            --text-main: #111827;
+            --text-sub: #6B7280;
+            --border: #E5E7EB;
             --font-serif: "Times New Roman", Times, serif; 
             --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
         }
-        body.dark-mode { --primary: #059669; --bg-body: #111827; --bg-card: #1F2937; --text-main: #F9FAFB; --text-sub: #9CA3AF; --border: #374151; }
+
+        /* DARK MODE OVERRIDES */
+        body.dark-mode {
+            --primary: #059669; /* Brighter green for dark mode */
+            --bg-body: #111827;
+            --bg-card: #1F2937;
+            --text-main: #F9FAFB;
+            --text-sub: #9CA3AF;
+            --border: #374151;
+        }
+
         * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
-        body { background-color: var(--primary); color: var(--text-main); font-family: var(--font-sans); transition: background 0.3s; }
-        .app-container { max-width: 500px; margin: 0 auto; min-height: 100vh; background: var(--bg-card); display: flex; flex-direction: column; }
+        body { background-color: var(--bg-body); color: var(--text-main); font-family: var(--font-sans); transition: background 0.3s, color 0.3s; }
+        
+        .app-container { max-width: 500px; margin: 0 auto; min-height: 100vh; background: var(--bg-card); box-shadow: 0 0 20px rgba(0,0,0,0.05); display: flex; flex-direction: column; }
         
         /* HEADER */
         .header { background-color: var(--primary); padding: 16px 20px; color: white; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 10; }
         .brand h1 { font-family: var(--font-serif); font-size: 22px; font-weight: 700; letter-spacing: 0.5px; }
+        .header-actions { display: flex; gap: 16px; align-items: center; }
         .icon-btn { cursor: pointer; opacity: 0.9; }
 
-        /* TABS & LISTS */
+        /* TABS */
         .nav-tabs { display: flex; border-bottom: 1px solid var(--border); background: var(--bg-card); }
         .nav-item { flex: 1; text-align: center; padding: 16px; color: var(--text-sub); font-weight: 600; cursor: pointer; font-size: 14px; position: relative; }
         .nav-item.active { color: var(--primary); }
         .nav-item.active::after { content: ''; position: absolute; bottom: 0; left: 0; right: 0; height: 3px; background: var(--primary); border-radius: 3px 3px 0 0; }
+
+        /* HERO CARD */
         .hero-card { padding: 32px 20px; text-align: center; background: var(--bg-card); border-bottom: 1px solid var(--border); }
+        .hero-label { font-size: 12px; text-transform: uppercase; color: var(--text-sub); letter-spacing: 1px; font-weight: 700; margin-bottom: 8px; }
         .hero-amount { font-family: var(--font-serif); font-size: 56px; font-weight: 700; line-height: 1; }
-        .text-green { color: #059669; } .text-red { color: #DC2626; }
-        
+        .text-green { color: #059669; }
+        .text-red { color: #DC2626; }
+
+        /* FEED & LISTS */
         .content { flex: 1; padding-bottom: 80px; }
         .section-title { padding: 24px 20px 10px; font-family: var(--font-serif); font-size: 18px; font-weight: 700; color: var(--text-main); display: flex; align-items: center; gap: 8px; }
-        .bet-row { display: flex; align-items: center; padding: 16px 20px; border-bottom: 1px solid var(--border); }
+        .feed-list { padding: 0 16px; }
+        .bet-row { display: flex; align-items: center; padding: 16px 0; border-bottom: 1px solid var(--border); }
         .bet-icon { width: 42px; height: 42px; background: var(--bg-body); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-right: 16px; color: var(--primary); border: 1px solid var(--border); }
         .bet-info { flex: 1; }
+        .bet-type { font-weight: 600; font-size: 16px; margin-bottom: 4px; color: var(--text-main); }
+        .bet-meta { font-size: 13px; color: var(--text-sub); }
         .bet-val { font-family: var(--font-serif); font-size: 18px; font-weight: 700; }
-        
-        /* SETTINGS */
+
+        /* SETTINGS & PROFILE */
         .settings-view { padding: 24px; }
         .settings-card { background: var(--bg-body); border-radius: 12px; border: 1px solid var(--border); overflow: hidden; margin-bottom: 24px; }
         .settings-row { padding: 16px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); }
-        .profile-lg { width: 80px; height: 80px; border-radius: 50%; border: 3px solid var(--primary); margin-bottom: 16px; object-fit: cover; }
+        .settings-row:last-child { border-bottom: none; }
+        .settings-label { font-weight: 600; color: var(--text-main); }
         
+        .profile-lg { width: 80px; height: 80px; border-radius: 50%; border: 3px solid var(--primary); margin-bottom: 16px; object-fit: cover; }
+        .profile-header { text-align: center; margin-bottom: 32px; }
+
         /* BUTTONS */
-        .fab { position: fixed; bottom: 30px; right: 24px; width: 64px; height: 64px; border-radius: 50%; background: var(--primary); color: white; border: none; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.3); display: flex; align-items: center; justify-content: center; cursor: pointer; z-index: 50; }
+        .fab { position: fixed; bottom: 30px; right: 24px; width: 64px; height: 64px; border-radius: 50%; background: var(--primary); color: white; border: none; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.3); display: flex; align-items: center; justify-content: center; cursor: pointer; transition: transform 0.1s; z-index: 50; }
+        .fab:active { transform: scale(0.95); }
+        
         .btn-full { width: 100%; padding: 14px; border-radius: 12px; font-weight: 600; font-size: 16px; cursor: pointer; text-align: center; border: none; margin-bottom: 12px; }
         .btn-primary { background: var(--primary); color: white; }
         .btn-outline { background: transparent; border: 1px solid var(--border); color: var(--text-sub); }
 
+        /* LOGIN & ERROR */
+        .login-screen { height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; background-color: var(--primary); color: white; padding: 32px; text-align: center; }
+        .error-box { margin-top: 20px; padding: 12px; background: rgba(0,0,0,0.2); border-radius: 8px; font-size: 12px; max-width: 300px; }
+
         /* MODAL */
         .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); backdrop-filter: blur(4px); display: flex; align-items: flex-end; z-index: 100; }
-        .modal-content { background: var(--bg-card); width: 100%; border-radius: 24px 24px 0 0; padding: 24px; max-height: 90vh; overflow-y: auto; }
-        .chip-grid { display: flex; gap: 10px; margin-bottom: 24px; overflow-x: auto; padding-bottom: 4px; }
-        .chip { padding: 14px 0; border: 1px solid var(--border); background: var(--bg-card); border-radius: 12px; text-align: center; font-weight: 700; color: var(--text-main); min-width: 60px; font-family: var(--font-serif); font-size: 18px; }
+        .modal-content { background: var(--bg-card); width: 100%; border-radius: 24px 24px 0 0; padding: 24px; max-height: 90vh; overflow-y: auto; box-shadow: 0 -10px 40px rgba(0,0,0,0.1); }
+        .control-label { display: block; font-size: 11px; font-weight: 800; color: var(--text-sub); margin-bottom: 12px; letter-spacing: 1px; text-transform: uppercase; }
+        
+        /* CHIPS & TOGGLES */
+        .chip { padding: 14px 0; border: 1px solid var(--border); background: var(--bg-card); border-radius: 12px; text-align: center; font-weight: 700; color: var(--text-main); cursor: pointer; min-width: 60px; font-family: var(--font-serif); font-size: 18px; }
         .chip.active { background: var(--primary); color: white; border-color: var(--primary); }
+        .chip-grid { display: flex; gap: 10px; margin-bottom: 24px; overflow-x: auto; padding-bottom: 4px; }
+        
+        .type-card { border: 1px solid var(--border); padding: 16px; border-radius: 12px; text-align: center; cursor: pointer; background: var(--bg-card); }
+        .type-card.active { border-color: var(--primary); background: rgba(0, 89, 76, 0.05); box-shadow: 0 0 0 2px var(--primary); }
         .type-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 32px; }
-        .type-card { border: 1px solid var(--border); padding: 16px; border-radius: 12px; text-align: center; background: var(--bg-card); }
-        .type-card.active { border-color: var(--primary); background: rgba(0, 89, 76, 0.05); }
+        .type-card strong { display: block; color: var(--text-main); margin-bottom: 4px; }
+        .type-card small { color: var(--text-sub); font-size: 11px; }
 
-        /* LOGIN */
-        .login-screen { height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
+        .winner-toggle { display: flex; background: var(--bg-body); padding: 4px; border-radius: 12px; margin-bottom: 24px; border: 1px solid var(--border); }
+        .toggle-opt { flex: 1; padding: 12px; text-align: center; font-weight: 600; font-size: 14px; border-radius: 8px; cursor: pointer; color: var(--text-sub); }
+        .toggle-opt.selected-green { background: var(--bg-card); color: var(--primary); box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
+        .toggle-opt.selected-red { background: var(--bg-card); color: #DC2626; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
+
     </style>
 </head>
 <body>
-    <div id="crash-report"></div>
-    <div id="root">
-        <div class="login-screen">
-            <div class="loading-text">Loading App...</div>
-        </div>
-    </div>
+    <div id="root"></div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
         import { getFirestore, collection, addDoc, query, orderBy, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
         import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js";
         
-       // Your web app's Firebase configuration
+      // Your web app's Firebase configuration
 const firebaseConfig = {
   apiKey: "AIzaSyBPBps7eOq5gqyT5LuOnUGJkhPumBbZh-w",
   authDomain: "scratch-d0420.firebaseapp.com",
@@ -116,12 +139,16 @@ const firebaseConfig = {
 };
 
 // Initialize Firebase
-const app = initializeApp(firebaseConfig);
 
-        const app = initializeApp(firebaseConfig);
-        window.db = getFirestore(app);
-        window.auth = getAuth(app);
-        window.provider = new GoogleAuthProvider();
+
+        const firebaseApp = initializeApp(firebaseConfig);
+        const db = getFirestore(firebaseApp);
+        const auth = getAuth(firebaseApp);
+        const provider = new GoogleAuthProvider();
+
+        window.db = db;
+        window.auth = auth;
+        window.provider = provider;
         window.ops = { collection, addDoc, query, orderBy, onSnapshot, serverTimestamp, signInWithPopup, signOut, onAuthStateChanged };
     </script>
 
@@ -134,6 +161,7 @@ const app = initializeApp(firebaseConfig);
             const [deferredPrompt, setDeferredPrompt] = useState(null);
             const [darkMode, setDarkMode] = useState(localStorage.getItem('theme') === 'dark');
 
+            // 1. Handle Dark Mode
             useEffect(() => {
                 if (darkMode) {
                     document.body.classList.add('dark-mode');
@@ -144,18 +172,18 @@ const app = initializeApp(firebaseConfig);
                 }
             }, [darkMode]);
 
+            // 2. Handle Install Prompt
             useEffect(() => {
                 window.addEventListener('beforeinstallprompt', (e) => {
                     e.preventDefault();
                     setDeferredPrompt(e);
+                    console.log("Install prompt captured");
                 });
             }, []);
 
+            // 3. Handle Auth
             useEffect(() => {
-                if (!window.ops) {
-                    console.error("Firebase Ops not loaded");
-                    return;
-                }
+                if (!window.ops) return;
                 const unsubscribe = window.ops.onAuthStateChanged(window.auth, (u) => {
                     setUser(u);
                     setLoading(false);
@@ -178,11 +206,11 @@ const app = initializeApp(firebaseConfig);
                         if (result.outcome === 'accepted') setDeferredPrompt(null);
                     });
                 } else {
-                    alert("Tap the browser menu (⋮ or Share) -> 'Add to Home Screen'");
+                    alert("To install: Tap the Share button in your browser, then 'Add to Home Screen'.");
                 }
             };
 
-            if (loading) return <div className="login-screen"><div className="loading-text">Connecting...</div></div>;
+            if (loading) return <div className="login-screen"><div>Loading...</div></div>;
 
             if (!user) {
                 return (
@@ -244,8 +272,10 @@ const app = initializeApp(firebaseConfig);
                         <div className="brand">
                             <h1>Scratch</h1>
                         </div>
-                        <div className="icon-btn" onClick={() => setView('settings')}>
-                            <i data-lucide="settings" color="white"></i>
+                        <div className="header-actions">
+                            <div className="icon-btn" onClick={() => setView('settings')}>
+                                <i data-lucide="settings" color="white"></i>
+                            </div>
                         </div>
                     </header>
 
@@ -254,10 +284,11 @@ const app = initializeApp(firebaseConfig);
                         <div className={`nav-item ${view === 'settings' ? 'active' : ''}`} onClick={() => setView('settings')}>Settings</div>
                     </div>
 
+                    {/* LEDGER VIEW */}
                     {view === 'ledger' && (
                         <div className="content">
                             <div className="hero-card">
-                                <div style={{fontSize: 12, textTransform: 'uppercase', color:'var(--text-sub)', marginBottom: 8, fontWeight: 700}}>Net Balance</div>
+                                <div className="hero-label">Net Balance</div>
                                 <div className={`hero-amount ${stats >= 0 ? 'text-green' : 'text-red'}`}>
                                     {stats >= 0 ? '+' : '-'}${Math.abs(stats)}
                                 </div>
@@ -268,10 +299,12 @@ const app = initializeApp(firebaseConfig);
                             <div className="feed-list">
                                 {bets.map(bet => (
                                     <div key={bet.id} className="bet-row">
-                                        <div className="bet-icon"><i data-lucide="trophy" size="20"></i></div>
+                                        <div className="bet-icon">
+                                            <i data-lucide="trophy" size="20"></i>
+                                        </div>
                                         <div className="bet-info">
-                                            <div style={{fontWeight: 600, fontSize: 16, marginBottom: 4}}>{bet.type}</div>
-                                            <div style={{fontSize: 13, color:'var(--text-sub)'}}>{bet.winner === 'Me' ? 'You won' : 'Dave won'}</div>
+                                            <div className="bet-type">{bet.type}</div>
+                                            <div className="bet-meta">{bet.winner === 'Me' ? 'You won' : 'Dave won'}</div>
                                         </div>
                                         <div className={`bet-val ${bet.winner === 'Me' ? 'text-green' : 'text-red'}`}>
                                             {bet.winner === 'Me' ? '+' : '-'}${bet.amount}
@@ -285,9 +318,10 @@ const app = initializeApp(firebaseConfig);
                         </div>
                     )}
 
+                    {/* SETTINGS VIEW */}
                     {view === 'settings' && (
                         <div className="content settings-view">
-                            <div style={{textAlign: 'center', marginBottom: 32}}>
+                            <div className="profile-header">
                                 <img src={user.photoURL} className="profile-lg" />
                                 <h2>{user.displayName}</h2>
                                 <p style={{color:'var(--text-sub)', fontSize: 14}}>{user.email}</p>
@@ -295,8 +329,13 @@ const app = initializeApp(firebaseConfig);
 
                             <div className="settings-card">
                                 <div className="settings-row">
-                                    <span style={{fontWeight: 600}}>Dark Mode</span>
-                                    <input type="checkbox" checked={darkMode} onChange={() => setDarkMode(!darkMode)} style={{transform: 'scale(1.5)', accentColor: 'var(--primary)'}} />
+                                    <span className="settings-label">Dark Mode</span>
+                                    <input 
+                                        type="checkbox" 
+                                        checked={darkMode} 
+                                        onChange={() => setDarkMode(!darkMode)}
+                                        style={{transform: 'scale(1.5)', accentColor: 'var(--primary)'}}
+                                    />
                                 </div>
                             </div>
 
@@ -310,7 +349,9 @@ const app = initializeApp(firebaseConfig);
                         </div>
                     )}
 
-                    {modalOpen && <BetModal onClose={() => setModalOpen(false)} onSubmit={handleAddBet} />}
+                    {modalOpen && (
+                        <BetModal onClose={() => setModalOpen(false)} onSubmit={handleAddBet} />
+                    )}
                 </div>
             );
         }
@@ -319,7 +360,13 @@ const app = initializeApp(firebaseConfig);
             const [winner, setWinner] = useState('Me');
             const [amount, setAmount] = useState(5);
             const [type, setType] = useState(null);
-            const presets = [{ l: "KP", s: "Closest to Pin" }, { l: "Drive", s: "Longest Drive" }, { l: "Sand", s: "Sand Save" }, { l: "Skin", s: "Hole Winner" }];
+
+            const presets = [
+                { label: "KP", sub: "Closest to Pin" },
+                { label: "Drive", sub: "Longest Drive" },
+                { label: "Sand", sub: "Sand Save" },
+                { label: "Skin", sub: "Hole Winner" },
+            ];
 
             useEffect(() => { setTimeout(() => lucide.createIcons(), 100) }, []);
 
@@ -327,31 +374,36 @@ const app = initializeApp(firebaseConfig);
                 <div className="modal-overlay">
                     <div className="modal-content">
                         <div style={{display:'flex', justifyContent:'space-between', marginBottom: 20}}>
-                            <h3 style={{fontFamily:'Times New Roman', fontSize:24}}>New Wager</h3>
-                            <div onClick={onClose} style={{cursor:'pointer'}}><i data-lucide="x"></i></div>
-                        </div>
-                        <div style={{fontSize: 11, fontWeight: 800, color:'var(--text-sub)', marginBottom: 12}}>WHO WON?</div>
-                        <div style={{display:'flex', gap: 10, marginBottom: 24}}>
-                             <div onClick={() => setWinner('Me')} style={{flex:1, padding:12, textAlign:'center', fontWeight:600, borderRadius:8, cursor:'pointer', border: '2px solid', borderColor: winner==='Me'?'var(--primary)':'transparent', color: winner==='Me'?'var(--primary)':'var(--text-sub)', background: winner==='Me'?'var(--bg-card)':'var(--bg-body)'}}>Me</div>
-                             <div onClick={() => setWinner('Opponent')} style={{flex:1, padding:12, textAlign:'center', fontWeight:600, borderRadius:8, cursor:'pointer', border: '2px solid', borderColor: winner==='Opponent'?'#DC2626':'transparent', color: winner==='Opponent'?'#DC2626':'var(--text-sub)', background: winner==='Opponent'?'var(--bg-card)':'var(--bg-body)'}}>Dave</div>
+                            <h3 style={{fontFamily:'Times New Roman', fontSize:24, color:'var(--text-main)'}}>New Wager</h3>
+                            <div onClick={onClose} style={{cursor:'pointer'}}><i data-lucide="x" color="var(--text-main)"></i></div>
                         </div>
 
-                        <div style={{fontSize: 11, fontWeight: 800, color:'var(--text-sub)', marginBottom: 12}}>AMOUNT</div>
+                        <label className="control-label">Who Won?</label>
+                        <div className="winner-toggle">
+                            <div className={`toggle-opt ${winner === 'Me' ? 'selected-green' : ''}`} onClick={() => setWinner('Me')}>Me</div>
+                            <div className={`toggle-opt ${winner === 'Opponent' ? 'selected-red' : ''}`} onClick={() => setWinner('Opponent')}>Dave</div>
+                        </div>
+
+                        <label className="control-label">Amount</label>
                         <div className="chip-grid">
                             {[1, 5, 10, 20, 50].map(val => (
                                 <div key={val} className={`chip ${amount === val ? 'active' : ''}`} onClick={() => setAmount(val)}>${val}</div>
                             ))}
                         </div>
 
-                        <div style={{fontSize: 11, fontWeight: 800, color:'var(--text-sub)', marginBottom: 12}}>BET TYPE</div>
+                        <label className="control-label">Bet Type</label>
                         <div className="type-grid">
                             {presets.map(p => (
-                                <div key={p.l} className={`type-card ${type === p.l ? 'active' : ''}`} onClick={() => setType(p.l)}>
-                                    <strong>{p.l}</strong><br/><small style={{fontSize:11, color:'var(--text-sub)'}}>{p.s}</small>
+                                <div key={p.label} className={`type-card ${type === p.label ? 'active' : ''}`} onClick={() => setType(p.label)}>
+                                    <strong>{p.label}</strong>
+                                    <small>{p.sub}</small>
                                 </div>
                             ))}
                         </div>
-                        <button className="btn-full btn-primary" disabled={!type} onClick={() => onSubmit(type, amount, winner)}>Place Bet</button>
+
+                        <button className="btn-full btn-primary" disabled={!type} onClick={() => onSubmit(type, amount, winner)}>
+                            Place Bet <i data-lucide="check-circle" size="18" style={{marginLeft:8, verticalAlign:'middle'}}></i>
+                        </button>
                     </div>
                 </div>
             );
