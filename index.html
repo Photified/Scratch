@@ -151,6 +151,7 @@
 
         // --- SUB-COMPONENTS ---
 
+        // Custom Styled Confirmation Modal
         const ConfirmModal = ({ title, msg, onConfirm, onCancel }) => (
             <div className="modal-overlay" style={{zIndex:1000}}>
                 <div className="modal-content" style={{maxWidth:300, textAlign:'center'}}>
@@ -674,9 +675,11 @@
 
             const switchTab = (tab) => { setActiveFriend(null); setView(tab); };
             const openFriend = (friend) => { setActiveFriend(friend); setView('friend'); };
-            
-            // FIX: Ensure back button goes to Ledger to avoid blank state
-            const goBack = () => { setActiveFriend(null); setView('ledger'); };
+
+            // STRICT RELOAD BACK BUTTON (User Requested)
+            const goBack = () => { 
+                window.location.reload(); 
+            };
 
             return (
                 <div className="app-container">
