@@ -90,7 +90,7 @@
         import { getFirestore, collection, addDoc, doc, updateDoc, getDocs, getDoc, setDoc, query, where, orderBy, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
         import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js";
         
-    // Your web app's Firebase configuration
+       // Your web app's Firebase configuration
 const firebaseConfig = {
   apiKey: "AIzaSyBPBps7eOq5gqyT5LuOnUGJkhPumBbZh-w",
   authDomain: "scratch-d0420.firebaseapp.com",
@@ -221,14 +221,27 @@ const firebaseConfig = {
                 );
             }
 
-            // USERNAME SETUP SCREEN
+            // --- REFINED USERNAME SETUP SCREEN ---
             if (!username) {
                 return (
                     <div className="login-screen">
-                        <h2 style={{fontFamily:'Times New Roman'}}>Create Username</h2>
-                        <p style={{opacity:0.6, fontSize:14, marginBottom:20}}>This is how friends will find you.</p>
-                        <input id="usernameInput" className="input-std" placeholder="e.g. Tiger" style={{textAlign:'center', fontSize:20, maxWidth:200, marginBottom:20}} />
-                        <button className="btn-full btn-primary" style={{maxWidth:200}} onClick={() => handleSetUsername(document.getElementById('usernameInput').value)}>Set Username</button>
+                        {/* Logo */}
+                        <img src="./images/logo192.png" style={{width: 80, borderRadius: 16, marginBottom: 16, boxShadow: '0 4px 12px rgba(0,0,0,0.1)'}} />
+                        
+                        {/* Bold Subheader */}
+                        <div style={{fontFamily: 'Times New Roman', fontWeight: 'bold', fontSize: 24, marginBottom: 32}}>
+                            The Gentlemen's Wager
+                        </div>
+
+                        <h3 style={{marginBottom: 8}}>Create Username</h3>
+                        <p style={{opacity: 0.6, fontSize: 14, marginBottom: 24}}>This is how friends will find you.</p>
+                        
+                        {/* Clean Input */}
+                        <input id="usernameInput" className="input-std" placeholder="e.g. Tiger" style={{maxWidth: 300, width: '100%', padding: 16, fontSize: 18, textAlign: 'center', marginBottom: 20}} />
+                        
+                        <button className="btn-full btn-primary" style={{maxWidth: 300}} onClick={() => handleSetUsername(document.getElementById('usernameInput').value)}>
+                            Set Username
+                        </button>
                     </div>
                 );
             }
